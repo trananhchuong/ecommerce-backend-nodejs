@@ -13,6 +13,4 @@ const app = express();
 
 // error handling
 
-
-
 module.exports = app;

@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const morgan = require("morgan");
+const helmet = require("helmet");
 
 // init middleware
 // app.use(morgan("dev"));
@@ -8,7 +9,7 @@ const morgan = require("morgan");
 // app.use(morgan("short"));
 // app.use(morgan("common"));
 app.use(morgan("tiny"));
-
+app.use(helmet());
 // init database
 
 // init routes

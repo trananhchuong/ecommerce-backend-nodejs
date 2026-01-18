@@ -13,8 +13,10 @@ const checkConnect = async () => {
     }
 };
 
+let intervalId = null;
+
 const checkOverload = () => {
-    setInterval(() => {
+    intervalId = setInterval(() => {
         const numConnection = mongoose.connections.length;
         const numCores = os.cpus().length;
         const memoryUsage = process.memoryUsage().rss;
@@ -24,9 +26,19 @@ const checkOverload = () => {
         console.log(`Max connections: ${maxConnections}`);
         console.log(`--------------------------------`);
     }, _SECONDS);
+    return intervalId;
+};
+
+const stopCheckOverload = () => {
+    if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+        console.log('Check overload interval stopped');
+    }
 };
 
 module.exports = {
     checkConnect,
     checkOverload,
+    stopCheckOverload,
 };

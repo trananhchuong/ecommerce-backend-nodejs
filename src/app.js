@@ -15,34 +15,9 @@ app.use(compression());
 
 // init database
 require("./dbs/init.mongodb"); // Initialize database connection
-const { checkOverload } = require("./helper/check.connect"); // Initialize database connection
-const mongoose = require("mongoose"); // Import mongoose for model creation
-checkOverload();
-
-const productTable = mongoose.model("Product", {
-  name: String,
-  price: Number,
-  description: String,
-});
-
-const listProduct = async () => {
-  const products = await productTable.find();
-  return products;
-};
-
-listProduct().then((products) => {
-  console.log("🚀 ~ products:", products)
-});
 
 // init routes
-
-app.get("/", (req, res) => {
-  const strCompress = "Hello World";
-  return res
-    .status(200)
-    .json({ message: "Hello World", metadata: strCompress.repeat(1000000) });
-});
+app.use("/", require("./routes"));
 
 // error handling
-
 module.exports = app;

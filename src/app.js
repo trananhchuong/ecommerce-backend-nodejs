@@ -12,7 +12,24 @@ app.use(morgan("dev"));
 // app.use(morgan("tiny"));
 app.use(helmet());
 app.use(compression());
+
 // init database
+const mongoose = require("./dbs/init.mongodb.lv0");
+
+const productTable = mongoose.model("Product", {
+  name: String,
+  price: Number,
+  description: String,
+});
+
+const listProduct = async () => {
+  const products = await productTable.find();
+  return products;
+};
+
+listProduct().then((products) => {
+  console.log("🚀 ~ products:", products)
+});
 
 // init routes
 

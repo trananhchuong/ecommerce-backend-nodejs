@@ -14,7 +14,8 @@ app.use(helmet());
 app.use(compression());
 
 // init database
-const mongoose = require("./dbs/init.mongodb.lv0");
+require("./dbs/init.mongodb"); // Initialize database connection
+const mongoose = require("mongoose"); // Import mongoose for model creation
 
 const productTable = mongoose.model("Product", {
   name: String,

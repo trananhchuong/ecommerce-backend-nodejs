@@ -15,7 +15,9 @@ app.use(compression());
 
 // init database
 require("./dbs/init.mongodb"); // Initialize database connection
+const { checkOverload } = require("./helper/check.connect"); // Initialize database connection
 const mongoose = require("mongoose"); // Import mongoose for model creation
+checkOverload();
 
 const productTable = mongoose.model("Product", {
   name: String,

@@ -12,6 +12,8 @@ app.use(morgan("dev"));
 // app.use(morgan("tiny"));
 app.use(helmet());
 app.use(compression());
+app.use(express.json()); // Parse JSON bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
 // init database
 require("./dbs/init.mongodb"); // Initialize database connection

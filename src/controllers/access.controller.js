@@ -1,15 +1,11 @@
 'use strict';
 
+const accessServices = require("../services/access.services");
+
 class AccessController {
     signUp = async (req, res, next) => {
         try {
-            console.log('[PGR]:: access :: signUp ::', req.body);
-            return res.status(200).json({
-                code: 'success',
-                metadata: {
-                    userId: 1
-                }
-            })
+            return res.status(201).json(await accessServices.signUp(req.body));
         } catch (error) {
             next(error);
         }

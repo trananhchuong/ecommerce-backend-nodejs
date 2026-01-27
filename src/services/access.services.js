@@ -59,6 +59,7 @@ class AccessService {
             }
 
         } catch (error) {
+            console.log("🚀 ~ AccessService ~ error:", error)
             return {
                 code: 'xxx',
                 message: "error",

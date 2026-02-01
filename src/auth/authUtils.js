@@ -8,8 +8,8 @@ const createTokenPair = async (payload, publicKey, privateKey) => {
         const accessToken = await JWT.sign(payload, publicKey, { expiresIn: '2 days' });
         const refreshToken = await JWT.sign(payload, privateKey, { expiresIn: '7 days' });
 
-        // For HS256, use the same key (privateKey) for verification
-        JWT.verify(accessToken, privateKey, (err, decoded) => {
+        // For HS256, use the same key (publicKey) for verification
+        JWT.verify(accessToken, publicKey, (err, decoded) => {
             if (err) {
                 console.log('Error verifying access token:', err);
             } else {

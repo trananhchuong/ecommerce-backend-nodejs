@@ -22,4 +22,21 @@ require("./dbs/init.mongodb"); // Initialize database connection
 app.use("/", require("./routes"));
 
 // error handling
+
+// handle 404 error
+app.use((req, res, next) => {
+    const error = new Error('Not Found');
+    error.status = 404;
+    next(error);
+});
+
+app.use((err, req, res, next) => {
+    const statusCode = err.status || 500;
+    return res.status(statusCode).json({
+        status: 'error',
+        code: statusCode,
+        message: err.message || 'Internal Server Error'
+    });
+});
+
 module.exports = app;

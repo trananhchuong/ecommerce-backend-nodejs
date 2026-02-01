@@ -1,6 +1,6 @@
 'use strict';
 
-const { ForbiddenError } = require('../core/error.respone');
+const { ForbiddenError } = require('../core/error.response');
 const { findById } = require('../services/apikey.services');
 const HEADER = {
     API_KEY: 'x-api-key',

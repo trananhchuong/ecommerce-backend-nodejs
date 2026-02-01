@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const keyTokenServices = require("./keyToken.services");
 const { createTokenPair } = require("../auth/authUtils");
-const { BadRequestError } = require("../core/error.respone");
+const { BadRequestError } = require("../core/error.response");
 
 const ROLE_SHOP = {
     SHOP: 'SHOP',

@@ -1,18 +1,6 @@
 'use strict';
 
-const STATUS_CODE = {
-    FORBIDDEN: 403,
-    CONFLICT: 409,
-    BAD_REQUEST: 400,
-    NOT_FOUND: 404
-}
-
-const REASON_PHRASE = {
-    FORBIDDEN: 'Forbidden',
-    CONFLICT: 'Conflict',
-    BAD_REQUEST: 'Bad Request',
-    NOT_FOUND: 'Not Found'
-}
+const { StatusCodes, ReasonPhrases } = require('../utils/httpStatusCode');
 
 class ErrorResponse extends Error {
     constructor(message, statusCode) {
@@ -22,25 +10,31 @@ class ErrorResponse extends Error {
 }
 
 class ConflictRequestError extends ErrorResponse {
-    constructor(message = REASON_PHRASE.CONFLICT, statusCode = STATUS_CODE.CONFLICT) {
+    constructor(message = ReasonPhrases.CONFLICT, statusCode = StatusCodes.CONFLICT) {
         super(message, statusCode);
     }
 }
 
 class BadRequestError extends ErrorResponse {
-    constructor(message = REASON_PHRASE.BAD_REQUEST, statusCode = STATUS_CODE.BAD_REQUEST) {
+    constructor(message = ReasonPhrases.BAD_REQUEST, statusCode = StatusCodes.BAD_REQUEST) {
         super(message, statusCode);
     }
 }
 
 class NotFoundError extends ErrorResponse {
-    constructor(message = REASON_PHRASE.NOT_FOUND, statusCode = STATUS_CODE.NOT_FOUND) {
+    constructor(message = ReasonPhrases.NOT_FOUND, statusCode = StatusCodes.NOT_FOUND) {
         super(message, statusCode);
     }
 }
 
 class ForbiddenError extends ErrorResponse {
-    constructor(message = REASON_PHRASE.FORBIDDEN, statusCode = STATUS_CODE.FORBIDDEN) {
+    constructor(message = ReasonPhrases.FORBIDDEN, statusCode = StatusCodes.FORBIDDEN) {
+        super(message, statusCode);
+    }
+}
+
+class AuthFailureError extends ErrorResponse {
+    constructor(message = ReasonPhrases.UNAUTHORIZED, statusCode = StatusCodes.UNAUTHORIZED) {
         super(message, statusCode);
     }
 }
@@ -49,5 +43,6 @@ module.exports = {
     ConflictRequestError,
     BadRequestError,
     NotFoundError,
-    ForbiddenError
+    ForbiddenError,
+    AuthFailureError
 }

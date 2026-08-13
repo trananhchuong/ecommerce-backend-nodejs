@@ -1,0 +1,22 @@
+---
+description: Security and database practices for this backend
+globs: src/auth/**/*.js, src/dbs/**/*.js, src/configs/**/*.js
+alwaysApply: false
+---
+
+# Security & Database
+
+## Auth
+- API key: required header `x-api-key`; validated via `apikey.services.findById`; result on `req.objKey`.
+- Permissions: `permission('0000'|'1111'|'2222')`; check `req.objKey.permissions.includes(permission)`.
+- Passwords: bcrypt only (e.g. `bcrypt.hash(password, 10)`, `bcrypt.compare`).
+- JWT: use `authUtils.createTokenPair(payload, publicKey, privateKey)`; store keys in KeyToken model for refresh flow.
+
+## MongoDB
+- Single connection via `src/dbs/init.mongodb` (singleton); require it once in `src/app.js`.
+- Connection string from config: `config.db` (host, port, name). For production, support full URI via env if needed.
+- Mongoose debug: gate with env (e.g. `NODE_ENV === 'dev'`) instead of always-on.
+
+## Config
+- `src/configs/config.mongodb.js` exports one of `dev` | `pro` by `NODE_ENV`; each has `app.port`, `db.host`, `db.port`, `db.name`.
+- Add an `.env.example` listing all used env vars (PORT, NODE_ENV, DEV_* / PRO_* for app and DB).

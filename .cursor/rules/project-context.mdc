@@ -1,0 +1,33 @@
+---
+description: E-commerce backend repo structure, stack, and where things live
+alwaysApply: true
+---
+
+# E-commerce Backend – Project Context
+
+## Stack
+- **Runtime**: Node.js
+- **Framework**: Express 5
+- **DB**: MongoDB with Mongoose
+- **Auth**: API key (x-api-key) + permission middleware, JWT (access + refresh), bcrypt
+
+## Layout
+- `server.js` – entry; starts app, graceful shutdown (SIGINT/SIGTERM)
+- `src/app.js` – Express app, middleware, routes, global error handler
+- `src/routes/index.js` – API key + permission('0000'), mounts `/v1/api` (e.g. access)
+- `src/routes/access/` – auth routes (signup, login)
+- `src/controllers/` – thin; call services, send SuccessResponse/CREATED
+- `src/services/` – business logic (access, shop, keyToken, apikey)
+- `src/models/` – Mongoose schemas (Shop, KeyToken, Apikey)
+- `src/auth/` – checkAuth (apiKey, permission, asyncHandler), authUtils (createTokenPair)
+- `src/core/` – success.response (SuccessResponse, CREATED), error.response (BadRequestError, etc.)
+- `src/configs/config.mongodb.js` – dev/pro env; exports selected config (app.port, db.host/port/name)
+- `src/dbs/init.mongodb.js` – singleton MongoDB connection
+- `src/helper/check.connect.js` – checkConnect, checkOverload, stopCheckOverload
+- `src/utils/` – getInfoData (lodash pick), httpStatusCode (StatusCodes, ReasonPhrases)
+
+## Conventions
+- Use existing error classes from `src/core/error.response` and pass errors to `next()` so the global handler can respond.
+- Wrap async route handlers with `asyncHandler` from `src/auth/checkAuth`.
+- Use `SuccessResponse` / `CREATED` in controllers; avoid raw `res.status().json()` for success.
+- New API routes: add under `src/routes/` and mount in `src/routes/index.js` (already behind apiKey + permission).

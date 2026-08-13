@@ -1,0 +1,43 @@
+---
+description: Backend patterns for routes, controllers, services, and errors
+globs: src/**/*.js
+alwaysApply: false
+---
+
+# Backend Patterns
+
+## Routes
+- Use `asyncHandler(Controller.method)` for async handlers.
+- Keep routes thin: route → controller → service.
+
+```javascript
+// ✅ GOOD
+router.post('/shop/signup', asyncHandler(AccessController.signUp));
+```
+
+## Controllers
+- Call service, then send response. No business logic in controllers.
+- Use `SuccessResponse` or `CREATED` from `src/core/success.response`.
+
+```javascript
+// ✅ GOOD
+signUp = async (req, res, next) => {
+  new CREATED({
+    message: "Sign up successfully",
+    metadata: await accessServices.signUp(req.body),
+  }).send(res);
+};
+```
+
+## Services
+- Export a single instance (e.g. `module.exports = new AccessService()`).
+- Reuse other services (e.g. shop.services, keyToken.services) instead of duplicating logic.
+- Throw errors from `src/core/error.response` (BadRequestError, AuthFailureError, etc.); do not send `res` from services.
+
+## Errors
+- In middleware, use `next(new ForbiddenError('...'))` so the global error handler returns a consistent shape; avoid `return res.status(403).json(...)` for app errors.
+- Global handler in `src/app.js` uses `err.status` or 500 and returns `{ status: 'error', code, message }`.
+
+## Config & env
+- DB/config: read from `src/configs/config.mongodb` (driven by `NODE_ENV`: dev | pro).
+- Use `process.env` with fallbacks in config; do not hardcode secrets.

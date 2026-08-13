@@ -99,11 +99,20 @@ class AccessService {
       return {
         code: 201,
         metadata: {
-          shop: getInfoData({ fields: ["_id", "name", "email"], object: shop }),
+          shop: getInfoData({ fields: ["_id", "name", "email"], object: newShop }),
           tokens,
         },
       };
     }
+  };
+
+  logout = async ({ refreshToken }) => {
+    const { userId } = req.user;
+    const keyStore = await keyTokenServices.findByUserId(userId);
+    if (!keyStore) {
+      throw new BadRequestError("Error: Key store not found");
+    }
+    return await keyTokenServices.deleteKeyToken(keyStore.refreshToken);
   };
 }
 

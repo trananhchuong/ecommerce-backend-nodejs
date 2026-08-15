@@ -1,10 +1,13 @@
 "use strict";
-const pick = require("lodash/pick");
+import pick from "lodash/pick";
 
-const getInfoData = ({ fields = [], object = {} }) => {
+interface GetInfoDataParams {
+  fields?: string[];
+  object?: Record<string, any>;
+}
+
+const getInfoData = ({ fields = [], object = {} }: GetInfoDataParams) => {
   return pick(object, fields);
 };
 
-module.exports = {
-    getInfoData
-}
+export { getInfoData };

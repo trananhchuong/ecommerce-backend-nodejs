@@ -1,4 +1,4 @@
-module.exports = {
+const ReasonPhrases = {
     /**
      * Official Documentation @ https://tools.ietf.org/html/rfc7231#section-6.3.3
      *
@@ -341,4 +341,6 @@ module.exports = {
      * Defined in the specification of HTTP/2 to indicate that a server is not able to produce a response for the combination of scheme and authority that are included in the request URI.
      */
     MISDIRECTED_REQUEST: "Misdirected Request"
-}
+} as const;
+
+export default ReasonPhrases;

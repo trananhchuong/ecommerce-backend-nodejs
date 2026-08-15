@@ -1,4 +1,4 @@
-module.exports = {
+const StatusCodes = {
     /**
      * Official Documentation @ https://tools.ietf.org/html/rfc7231#section-6.2.1
      *
@@ -341,4 +341,6 @@ module.exports = {
      * The 511 status code indicates that the client needs to authenticate to gain network access.
      */
     NETWORK_AUTHENTICATION_REQUIRED: 511
-}
+} as const;
+
+export default StatusCodes;

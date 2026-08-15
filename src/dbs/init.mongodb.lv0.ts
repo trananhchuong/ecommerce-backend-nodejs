@@ -1,6 +1,6 @@
 "use strict";
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const connectString = "mongodb://localhost:27017/shopDEV";
 
@@ -19,4 +19,4 @@ if (1 === 1) {
   mongoose.set("debug", { color: true });
 }
 
-module.exports = mongoose;
+export default mongoose;

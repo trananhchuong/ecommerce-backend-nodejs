@@ -1,12 +1,18 @@
 "use strict";
 
-const mongoose = require("mongoose");
-const { db: { host, port, name } } = require("../configs/config.mongodb");
+import mongoose from "mongoose";
+import config from "../configs/config.mongodb";
+import { checkConnect } from "../helper/check.connect";
+
+const {
+  db: { host, port, name },
+} = config;
 
 const connectString = `mongodb://${host}:${port}/${name}`;
-const { checkConnect } = require("../helper/check.connect");
 
 class Database {
+  private static instance: Database;
+
   constructor() {
     this.connect();
   }
@@ -17,7 +23,8 @@ class Database {
       mongoose.set("debug", { color: true });
     }
 
-    mongoose.connect(connectString)
+    mongoose
+      .connect(connectString)
       .then(() => {
         console.log("Connected to MongoDB");
         checkConnect();
@@ -45,4 +52,4 @@ class Database {
   }
 }
 
-module.exports = Database.getInstance();
+export default Database.getInstance();

@@ -1,9 +1,21 @@
 "use strict";
 
-const keyTokenModel = require("../models/keyToken.model");
+import keyTokenModel from "../models/keyToken.model";
+
+interface CreateKeyTokenParams {
+  userId: string;
+  publicKey: string;
+  privateKey: string;
+  refreshToken?: string;
+}
 
 class KeyTokenService {
-  createKeyToken = async ({ userId, publicKey, privateKey, refreshToken }) => {
+  createKeyToken = async ({
+    userId,
+    publicKey,
+    privateKey,
+    refreshToken,
+  }: CreateKeyTokenParams) => {
     try {
       // publicKey and privateKey are already PEM strings
       // const keyToken = await keyTokenModel.create({
@@ -35,4 +47,4 @@ class KeyTokenService {
   };
 }
 
-module.exports = new KeyTokenService();
+export default new KeyTokenService();

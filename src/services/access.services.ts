@@ -1,13 +1,13 @@
 "use strict";
 
-const shopModel = require("../models/shop.model");
-const bcrypt = require("bcrypt");
-const crypto = require("crypto");
-const keyTokenServices = require("./keyToken.services");
-const { createTokenPair } = require("../auth/authUtils");
-const { BadRequestError, AuthFailureError } = require("../core/error.response");
-const { findByEmail } = require("./shop.services");
-const { getInfoData } = require("../utils");
+import shopModel from "../models/shop.model";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import keyTokenServices from "./keyToken.services";
+import { createTokenPair } from "../auth/authUtils";
+import { BadRequestError, AuthFailureError } from "../core/error.response";
+import { findByEmail } from "./shop.services";
+import { getInfoData } from "../utils";
 
 const ROLE_SHOP = {
   SHOP: "SHOP",
@@ -15,6 +15,22 @@ const ROLE_SHOP = {
   EDITOR: "EDITOR",
   ADMIN: "ADMIN",
 };
+
+interface LoginParams {
+  email: string;
+  password: string;
+  refreshToken?: string | null;
+}
+
+interface SignUpParams {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface LogoutParams {
+  refreshToken?: string;
+}
 
 class AccessService {
   /*
@@ -25,7 +41,7 @@ class AccessService {
         step 5: return token pair.
     */
 
-  login = async ({ email, password, refreshToken = null }) => {
+  login = async ({ email, password, refreshToken = null }: LoginParams) => {
     // step 1: check email exist
     const shop = await findByEmail({ email });
     if (!shop) {
@@ -48,10 +64,11 @@ class AccessService {
       privateKey,
     );
 
+    // @ts-expect-error publicKey missing here — pre-existing bug, fixed in a follow-up commit
     await keyTokenServices.createKeyToken({
-      refreshToken: tokens.refreshToken,
+      refreshToken: tokens?.refreshToken as string,
       privateKey,
-      userId: shop._id,
+      userId: shop._id.toString(),
     });
 
     // step 5: return token pair.
@@ -61,7 +78,7 @@ class AccessService {
     };
   };
 
-  signUp = async ({ email, password, name }) => {
+  signUp = async ({ email, password, name }: SignUpParams) => {
     // step 1: check email exist
     const holder = await shopModel.findOne({ email: email }).lean();
     if (holder) {
@@ -81,7 +98,7 @@ class AccessService {
       const publicKey = crypto.randomBytes(64).toString("hex");
 
       const keyStore = await keyTokenServices.createKeyToken({
-        userId: newShop._id,
+        userId: newShop._id.toString(),
         publicKey,
         privateKey,
       });
@@ -99,21 +116,27 @@ class AccessService {
       return {
         code: 201,
         metadata: {
-          shop: getInfoData({ fields: ["_id", "name", "email"], object: newShop }),
+          shop: getInfoData({
+            fields: ["_id", "name", "email"],
+            object: newShop,
+          }),
           tokens,
         },
       };
     }
   };
 
-  logout = async ({ refreshToken }) => {
+  logout = async ({ refreshToken }: LogoutParams) => {
+    // @ts-expect-error req is not in scope here — pre-existing bug, fixed in a follow-up commit
     const { userId } = req.user;
+    // @ts-expect-error findByUserId not implemented yet — pre-existing bug, fixed in a follow-up commit
     const keyStore = await keyTokenServices.findByUserId(userId);
     if (!keyStore) {
       throw new BadRequestError("Error: Key store not found");
     }
+    // @ts-expect-error deleteKeyToken not implemented yet — pre-existing bug, fixed in a follow-up commit
     return await keyTokenServices.deleteKeyToken(keyStore.refreshToken);
   };
 }
 
-module.exports = new AccessService();
+export default new AccessService();

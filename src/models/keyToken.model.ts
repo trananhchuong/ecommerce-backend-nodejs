@@ -1,11 +1,20 @@
 "use strict";
-const { model, Schema } = require("mongoose");
+
+import { model, Schema, Document, Types } from "mongoose";
 
 const DOCUMENT_NAME = "Key";
 const COLLECTION_NAME = "Keys";
 
+interface IKeyToken extends Document {
+  user: Types.ObjectId;
+  publicKey: string;
+  privateKey: string;
+  refreshTokensUsed: string[];
+  refreshToken: string;
+}
+
 // Declare the Schema of the Mongo model
-const keyTokenSchema = new Schema(
+const keyTokenSchema = new Schema<IKeyToken>(
   {
     user: {
       type: Schema.Types.ObjectId,
@@ -21,7 +30,7 @@ const keyTokenSchema = new Schema(
       required: true,
     },
     refreshTokensUsed: {
-      type: Array,
+      type: [String],
       default: [],
     },
     refreshToken: {
@@ -36,4 +45,5 @@ const keyTokenSchema = new Schema(
 );
 
 // Export the model
-module.exports = model(DOCUMENT_NAME, keyTokenSchema);
+export default model<IKeyToken>(DOCUMENT_NAME, keyTokenSchema);
+export type { IKeyToken };

@@ -29,6 +29,7 @@ interface SignUpParams {
 }
 
 interface LogoutParams {
+  userId: string;
   refreshToken?: string;
 }
 
@@ -64,9 +65,9 @@ class AccessService {
       privateKey,
     );
 
-    // @ts-expect-error publicKey missing here — pre-existing bug, fixed in a follow-up commit
     await keyTokenServices.createKeyToken({
       refreshToken: tokens?.refreshToken as string,
+      publicKey,
       privateKey,
       userId: shop._id.toString(),
     });
@@ -126,15 +127,11 @@ class AccessService {
     }
   };
 
-  logout = async ({ refreshToken }: LogoutParams) => {
-    // @ts-expect-error req is not in scope here — pre-existing bug, fixed in a follow-up commit
-    const { userId } = req.user;
-    // @ts-expect-error findByUserId not implemented yet — pre-existing bug, fixed in a follow-up commit
+  logout = async ({ userId }: LogoutParams) => {
     const keyStore = await keyTokenServices.findByUserId(userId);
     if (!keyStore) {
       throw new BadRequestError("Error: Key store not found");
     }
-    // @ts-expect-error deleteKeyToken not implemented yet — pre-existing bug, fixed in a follow-up commit
     return await keyTokenServices.deleteKeyToken(keyStore.refreshToken);
   };
 }

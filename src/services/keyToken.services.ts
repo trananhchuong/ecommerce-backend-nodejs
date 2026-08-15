@@ -45,6 +45,14 @@ class KeyTokenService {
       return error;
     }
   };
+
+  findByUserId = async (userId: string) => {
+    return await keyTokenModel.findOne({ user: userId });
+  };
+
+  deleteKeyToken = async (refreshToken: string) => {
+    return await keyTokenModel.deleteOne({ refreshToken });
+  };
 }
 
 export default new KeyTokenService();

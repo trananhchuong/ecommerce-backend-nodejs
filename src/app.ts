@@ -26,6 +26,7 @@ app.use("/", router);
 
 interface HttpError extends Error {
   status?: number;
+  statusCode?: number;
 }
 
 // handle 404 error
@@ -36,7 +37,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use((err: HttpError, req: Request, res: Response, next: NextFunction) => {
-  const statusCode = err.status || 500;
+  const statusCode = err.status || err.statusCode || 500;
   return res.status(statusCode).json({
     status: "error",
     code: statusCode,

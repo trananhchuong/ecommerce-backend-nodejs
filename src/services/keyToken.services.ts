@@ -16,34 +16,22 @@ class KeyTokenService {
     privateKey,
     refreshToken,
   }: CreateKeyTokenParams) => {
-    try {
-      // publicKey and privateKey are already PEM strings
-      // const keyToken = await keyTokenModel.create({
-      //     user: userId,
-      //     publicKey,
-      //     privateKey
-      // });
-      // return keyToken ? keyToken.publicKey : null;
+    const filter = { user: userId };
+    const update = {
+      publicKey,
+      privateKey,
+      refreshTokensUsed: [],
+      refreshToken,
+    };
+    const options = { upsert: true, new: true };
 
-      const filter = { user: userId };
-      const update = {
-        publicKey,
-        privateKey,
-        refreshTokensUsed: [],
-        refreshToken,
-      };
-      const options = { upsert: true, new: true };
+    const tokens = await keyTokenModel.findOneAndUpdate(
+      filter,
+      update,
+      options,
+    );
 
-      const tokens = await keyTokenModel.findOneAndUpdate(
-        filter,
-        update,
-        options,
-      );
-
-      return tokens ? tokens.publicKey : null;
-    } catch (error) {
-      return error;
-    }
+    return tokens ? tokens.publicKey : null;
   };
 
   findByUserId = async (userId: string) => {

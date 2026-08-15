@@ -1,16 +1,15 @@
-'use strict';
+"use strict";
 
-const express = require('express');
+import express from "express";
 const router = express.Router();
-const AccessController = require('../../controllers/access.controller');
-const { asyncHandler } = require('../../auth/checkAuth');
+import AccessController from "../../controllers/access.controller";
+import { asyncHandler } from "../../auth/checkAuth";
 
 // sign up
-router.post('/shop/signup', asyncHandler(AccessController.signUp));
-router.post('/shop/login', asyncHandler(AccessController.login));
+router.post("/shop/signup", asyncHandler(AccessController.signUp));
+router.post("/shop/login", asyncHandler(AccessController.login));
 
 // authentication
-router.post('/logout', asyncHandler(AccessController.logout));
+router.post("/logout", asyncHandler(AccessController.logout));
 
-
-module.exports = router;
+export default router;

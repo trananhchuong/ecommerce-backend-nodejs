@@ -1,12 +1,13 @@
-'use strict';
+"use strict";
 
-const express = require('express');
+import express from "express";
 const router = express.Router();
-const { apiKey, permission } = require('../auth/checkAuth');
+import { apiKey, permission } from "../auth/checkAuth";
+import accessRouter from "./access";
 
 /**
  * REQUEST FLOW - Two-Layer Security Middleware
- * 
+ *
  * ┌─────────────────┐
  * │   Request       │
  * │  with API Key   │
@@ -41,8 +42,8 @@ router.use(apiKey);
 // Verifies the API key has the required permission level ('0000' = basic access)
 // Implements role-based access control (RBAC) for different API key tiers
 // Permission levels: '0000' (basic), '1111' (intermediate), '2222' (advanced)
-router.use(permission('0000'));
+router.use(permission("0000"));
 
-router.use('/v1/api', require('./access'));
+router.use("/v1/api", accessRouter);
 
-module.exports = router;
+export default router;

@@ -21,7 +21,7 @@ class AccessController {
   logout = async (req: Request, res: Response, next: NextFunction) => {
     new SuccessResponse({
       message: "Logout successfully",
-      metadata: await accessServices.logout(req.body),
+      metadata: await accessServices.logout(req?.keyStore?.userId as string),
     }).send(res);
   };
 }

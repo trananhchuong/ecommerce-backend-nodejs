@@ -28,11 +28,6 @@ interface SignUpParams {
   name: string;
 }
 
-interface LogoutParams {
-  userId: string;
-  refreshToken?: string;
-}
-
 class AccessService {
   /*
         step 1: check email exist
@@ -60,7 +55,7 @@ class AccessService {
 
     // step 4: generate token pair.
     const tokens = await createTokenPair(
-      { userId: shop._id, email },
+      { userId: shop._id.toString(), email },
       publicKey,
       privateKey,
     );
@@ -110,7 +105,7 @@ class AccessService {
 
       // create token pair
       const tokens = await createTokenPair(
-        { userId: newShop._id, email },
+        { userId: newShop._id.toString(), email },
         publicKey,
         privateKey,
       );
@@ -127,12 +122,8 @@ class AccessService {
     }
   };
 
-  logout = async ({ userId }: LogoutParams) => {
-    const keyStore = await keyTokenServices.findByUserId(userId);
-    if (!keyStore) {
-      throw new BadRequestError("Error: Key store not found");
-    }
-    return await keyTokenServices.deleteKeyToken(keyStore.refreshToken);
+  logout = async (userId: string) => {
+    return await keyTokenServices.removeKeyById(userId);
   };
 }
 

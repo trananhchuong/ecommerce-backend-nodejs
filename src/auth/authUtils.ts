@@ -1,14 +1,30 @@
 "use strict";
 
-import JWT from "jsonwebtoken";
+import JWT, { JwtPayload } from "jsonwebtoken";
+import { asyncHandler } from "../helper/asyncHandler";
+import { Request, Response, NextFunction } from "express";
+import { AuthFailureError } from "../core/error.response";
+import keyTokenServices from "../services/keyToken.services";
 
 interface TokenPair {
   accessToken: string;
   refreshToken: string;
 }
 
+export interface TokenPayload extends JwtPayload {
+  userId: string;
+  email: string;
+}
+
+const HEADER = {
+  API_KEY: "x-api-key",
+  CLIENT_ID: "x-client-id",
+  AUTHORIZATION: "authorization",
+};
+
+
 const createTokenPair = async (
-  payload: object,
+  payload: TokenPayload,
   publicKey: string,
   privateKey: string,
 ): Promise<TokenPair> => {
@@ -28,4 +44,51 @@ const createTokenPair = async (
   return { accessToken, refreshToken };
 };
 
-export { createTokenPair };
+const authentication = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    /*
+      1 - Check userId missing???
+      2 - get accessToken
+      3 - verifyToken
+      4 - check user in bds?
+      5 - check keyStore with this userid?
+      6 - OK all => return next ()
+    */
+
+    // 1
+    const userId = req.headers[HEADER.CLIENT_ID];
+    if (!userId) {
+      throw new AuthFailureError("Invalid Request: Missing userId in headers");
+    }
+
+    // 2
+    const keyStore = await keyTokenServices.findByUserId(userId.toString());
+    if (!keyStore) {
+      throw new AuthFailureError("Invalid Request: Key store not found");
+    }
+
+    // 3
+    const accessToken = req.headers[HEADER.AUTHORIZATION];
+    if (!accessToken) {
+      throw new AuthFailureError("Invalid Request: Missing access token");
+    }
+    const token = Array.isArray(accessToken) ? accessToken[0] : accessToken;
+
+    try {
+      const decoded = JWT.verify(token, keyStore.publicKey) as TokenPayload;
+
+      if (decoded.userId !== userId) {
+        throw new AuthFailureError("Invalid Request: User ID mismatch");
+      }
+
+      req.keyStore = decoded; // Attach the decoded payload to the request object
+
+      return next();
+    } catch (err) {
+      throw new AuthFailureError("Invalid Request: Access token verification failed");
+    }
+
+  },
+);
+
+export { createTokenPair, authentication };

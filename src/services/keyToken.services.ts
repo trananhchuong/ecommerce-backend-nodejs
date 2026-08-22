@@ -1,5 +1,3 @@
-"use strict";
-
 import { Types } from "mongoose";
 import keyTokenModel from "../models/keyToken.model";
 

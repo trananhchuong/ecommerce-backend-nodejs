@@ -1,5 +1,3 @@
-"use strict";
-
 import JWT, { JwtPayload } from "jsonwebtoken";
 import { asyncHandler } from "../helper/asyncHandler";
 import { Request, Response, NextFunction } from "express";

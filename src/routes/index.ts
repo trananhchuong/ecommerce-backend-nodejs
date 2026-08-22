@@ -1,9 +1,7 @@
-"use strict";
-
 import express from "express";
-const router = express.Router();
 import { apiKey, permission } from "../auth/checkAuth";
 import accessRouter from "./access";
+const router = express.Router();
 
 /**
  * REQUEST FLOW - Two-Layer Security Middleware

@@ -1,4 +1,3 @@
-"use strict";
 import pick from "lodash/pick";
 
 interface GetInfoDataParams {

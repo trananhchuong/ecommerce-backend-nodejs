@@ -1,5 +1,3 @@
-"use strict";
-
 import { StatusCodes, ReasonPhrases } from "../utils/httpStatusCode";
 
 class ErrorResponse extends Error {

@@ -1,5 +1,3 @@
-"use strict";
-
 import { model, Schema, Document, Types } from "mongoose";
 
 const DOCUMENT_NAME = "Key";

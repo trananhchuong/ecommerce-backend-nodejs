@@ -1,5 +1,3 @@
-"use strict";
-
 import { Request, Response, NextFunction } from "express";
 import { CREATED, SuccessResponse } from "../core/success.response";
 import accessServices from "../services/access.services";

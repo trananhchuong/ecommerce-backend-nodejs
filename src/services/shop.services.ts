@@ -1,5 +1,3 @@
-"use strict";
-
 import shopModel from "../models/shop.model";
 
 const findByEmail = async ({ email }: { email: string }) => {

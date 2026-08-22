@@ -1,5 +1,3 @@
-"use strict";
-
 import shopModel from "../models/shop.model";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -8,6 +6,7 @@ import { createTokenPair } from "../auth/authUtils";
 import { BadRequestError, AuthFailureError } from "../core/error.response";
 import { findByEmail } from "./shop.services";
 import { getInfoData } from "../utils";
+import StatusCodes from "../utils/statusCodes";
 
 const ROLE_SHOP = {
   SHOP: "SHOP",
@@ -110,7 +109,7 @@ class AccessService {
         privateKey,
       );
       return {
-        code: 201,
+        code: StatusCodes.CREATED,
         metadata: {
           shop: getInfoData({
             fields: ["_id", "name", "email"],

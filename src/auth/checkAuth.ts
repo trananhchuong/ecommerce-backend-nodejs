@@ -1,5 +1,3 @@
-"use strict";
-
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { ForbiddenError } from "../core/error.response";
 import { findById } from "../services/apikey.services";

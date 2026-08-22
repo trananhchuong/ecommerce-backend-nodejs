@@ -1,5 +1,3 @@
-"use strict";
-
 import apiKeyModel, { IApikey } from "../models/apikey.model";
 
 const findById = async (key: string): Promise<IApikey | null> => {

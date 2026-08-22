@@ -1,11 +1,5 @@
-"use strict";
-
 import { Response } from "express";
-
-const STATUS_CODE = {
-  OK: 200,
-  CREATED: 201,
-};
+import { StatusCodes } from "../utils/httpStatusCode";
 
 const REASON_PHRASE = {
   OK: "OK",
@@ -25,7 +19,7 @@ class SuccessResponse {
   message: string;
 
   constructor({
-    statusCode = STATUS_CODE.OK,
+    statusCode = StatusCodes.OK,
     message,
     reasonStatusCode = REASON_PHRASE.OK,
     metadata = {},
@@ -49,11 +43,11 @@ class OK extends SuccessResponse {
 class CREATED extends SuccessResponse {
   constructor({
     message,
-    statusCode = STATUS_CODE.CREATED,
+    statusCode = StatusCodes.CREATED,
     metadata,
   }: SuccessResponseParams) {
     super({ message, statusCode, metadata });
   }
 }
 
-export { OK, CREATED, SuccessResponse };
+export { CREATED, OK, SuccessResponse };

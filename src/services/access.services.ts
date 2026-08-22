@@ -2,8 +2,12 @@ import shopModel from "../models/shop.model";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import keyTokenServices from "./keyToken.services";
-import { createTokenPair } from "../auth/authUtils";
-import { BadRequestError, AuthFailureError } from "../core/error.response";
+import { createTokenPair, verifyJWT } from "../auth/authUtils";
+import {
+  BadRequestError,
+  AuthFailureError,
+  ForbiddenError,
+} from "../core/error.response";
 import { findByEmail } from "./shop.services";
 import { getInfoData } from "../utils";
 import StatusCodes from "../utils/statusCodes";
@@ -123,6 +127,50 @@ class AccessService {
 
   logout = async (userId: string) => {
     return await keyTokenServices.removeKeyById(userId);
+  };
+
+  handleRefreshToken = async (refreshToken: string) => {
+    const foundToken =
+      await keyTokenServices.findByRefreshTokenUsed(refreshToken);
+    if (foundToken) {
+      const { userId, email } = await verifyJWT(
+        refreshToken,
+        foundToken.privateKey,
+      );
+      await keyTokenServices.removeKeyById(foundToken.user.toString());
+      throw new ForbiddenError("Error: Refresh token has been used");
+    }
+
+    const holderToken = await keyTokenServices.findByRefreshToken(refreshToken);
+    if (!holderToken) {
+      throw new AuthFailureError("Error: Refresh token not found");
+    }
+
+    const { userId, email } = await verifyJWT(
+      refreshToken,
+      holderToken.privateKey,
+    );
+
+    const shop = await findByEmail({ email });
+    if (!shop) {
+      throw new AuthFailureError("Error: Shop not found");
+    }
+
+    const tokens = await createTokenPair(
+      { userId, email },
+      holderToken.publicKey,
+      holderToken.privateKey,
+    );
+
+    await keyTokenServices.rotateRefreshToken({
+      oldRefreshToken: refreshToken,
+      newRefreshToken: tokens.refreshToken,
+    });
+
+    return {
+      shop: getInfoData({ fields: ["_id", "name", "email"], object: shop }),
+      tokens,
+    };
   };
 }
 

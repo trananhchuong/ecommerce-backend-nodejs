@@ -8,6 +8,11 @@ interface CreateKeyTokenParams {
   refreshToken?: string;
 }
 
+interface RotateRefreshTokenParams {
+  oldRefreshToken: string;
+  newRefreshToken: string;
+}
+
 class KeyTokenService {
   createKeyToken = async ({
     userId,
@@ -34,12 +39,42 @@ class KeyTokenService {
   };
 
   findByUserId = async (userId: string) => {
-    return await keyTokenModel.findOne({ user: new Types.ObjectId(userId) }).lean();
+    return await keyTokenModel
+      .findOne({ user: new Types.ObjectId(userId) })
+      .lean();
   };
 
   removeKeyById = async (userId: string) => {
-    return await keyTokenModel.findOneAndDelete({ user: new Types.ObjectId(userId) });
+    return await keyTokenModel.findOneAndDelete({
+      user: new Types.ObjectId(userId),
+    });
   };
+
+  findByRefreshTokenUsed = async (refreshToken: string) => {
+    return await keyTokenModel
+      .findOne({ refreshTokensUsed: refreshToken })
+      .lean();
+  };
+
+  findByRefreshToken = async (refreshToken: string) => {
+    return await keyTokenModel.findOne({ refreshToken }).lean();
+  };
+
+  rotateRefreshToken = async ({
+    oldRefreshToken,
+    newRefreshToken,
+  }: RotateRefreshTokenParams) => {
+    return await keyTokenModel.findOneAndUpdate(
+      { refreshToken: oldRefreshToken },
+      {
+        $set: { refreshToken: newRefreshToken },
+        $addToSet: { refreshTokensUsed: oldRefreshToken },
+      },
+      { new: true },
+    );
+  };
+
+
 }
 
 export default new KeyTokenService();

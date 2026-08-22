@@ -89,4 +89,13 @@ const authentication = asyncHandler(
   },
 );
 
-export { createTokenPair, authentication };
+const verifyJWT = async (token: string, keySecret: string): Promise<TokenPayload> => {
+  return new Promise((resolve, reject) => {
+    JWT.verify(token, keySecret, (err, decoded) => {
+      if (err) return reject(err);
+      resolve(decoded as TokenPayload);
+    });
+  });
+}
+
+export { createTokenPair, authentication, verifyJWT };

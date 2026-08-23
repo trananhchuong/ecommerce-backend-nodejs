@@ -28,6 +28,11 @@ interface IElectronics {
   product_shop: Types.ObjectId;
 }
 
+interface IFurniture extends Document {
+  product_shop: Types.ObjectId;
+  [key: string]: unknown;
+}
+
 const productSchema = new Schema<IProduct>(
   {
     product_name: {
@@ -110,10 +115,26 @@ const electronicSchema = new Schema<IElectronics>(
   },
 );
 
+const furnitureSchema = new Schema<IFurniture>(
+  {
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true,
+    },
+  },
+  {
+    collection: "furnitures",
+    timestamps: true,
+    strict: false,
+  },
+);
+
 export default model<IProduct>(DOCUMENT_NAME, productSchema);
 export const clothingModel = model<IClothing>("Clothing", clothingSchema);
 export const electronicModel = model<IElectronics>(
   "Electronics",
   electronicSchema,
 );
-export type { IProduct, IClothing, IElectronics };
+export const furnitureModel = model<IFurniture>("Furniture", furnitureSchema);
+export type { IProduct, IClothing, IElectronics, IFurniture };

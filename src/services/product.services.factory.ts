@@ -1,13 +1,12 @@
 import {
   clothingModel,
   electronicModel,
-  furnitureModel,
   IProduct,
 } from "../models/product.model";
 import productModel from "../models/product.model";
 import { BadRequestError } from "../core/error.response";
 
-type ProductType = "Clothing" | "Electronics" | "Furniture";
+type ProductType = "Clothing" | "Electronics";
 
 type ProductPayload = {
   product_name: string;
@@ -41,11 +40,7 @@ class Product {
     this.product_attributes = payload.product_attributes;
   }
 
-  async createProduct(product_id?: string) {
-    if (!product_id) {
-      throw new BadRequestError("Error: product subtype id is required");
-    }
-
+  async createProduct(product_id: string) {
     const newProduct = await productModel.create({
       _id: product_id,
       product_name: this.product_name,
@@ -94,50 +89,22 @@ class Electronics extends Product {
   }
 }
 
-class Furniture extends Product {
-  async createProduct() {
-    const newFurniture = await furnitureModel.create({
-      ...this.product_attributes,
-      product_shop: this.product_shop,
-    });
-    if (!newFurniture) {
-      throw new BadRequestError("Error: create new Furniture error");
-    }
-
-    return await super.createProduct(newFurniture._id.toString());
-  }
-}
-
 class ProductFactory {
-  private static productRegistry: Record<
-    ProductType,
-    new (payload: ProductPayload) => Product
-  > = {} as Record<ProductType, new (payload: ProductPayload) => Product>;
-
-  static registerProductType(
-    type: ProductType,
-    classRef: new (payload: ProductPayload) => Product,
-  ) {
-    ProductFactory.productRegistry[type] = classRef;
-  }
-
   static async createProduct(
     type: ProductType,
     payload: ProductPayload,
   ): Promise<IProduct> {
-    const productClass = ProductFactory.productRegistry[type];
-    if (!productClass) {
+    switch (type) {
+      case "Electronics":
+        return new Electronics(payload).createProduct();
+      case "Clothing":
+        return new Clothing(payload).createProduct();
+      default:
         throw new BadRequestError(`Error: Invalid Product Type ${type}`);
     }
-
-    return new productClass(payload).createProduct();
   }
 }
 
-ProductFactory.registerProductType("Electronics", Electronics);
-ProductFactory.registerProductType("Clothing", Clothing);
-ProductFactory.registerProductType("Furniture", Furniture);
-
 export default ProductFactory;
-export { Clothing, Electronics, Furniture, Product, ProductFactory };
+export { Clothing, Electronics, Product, ProductFactory };
 export type { ProductPayload, ProductType };

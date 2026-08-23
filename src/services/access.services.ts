@@ -2,7 +2,7 @@ import shopModel from "../models/shop.model";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import keyTokenServices from "./keyToken.services";
-import { createTokenPair, TokenPayload, verifyJWT } from "../auth/authUtils";
+import { AuthContext, createTokenPair } from "../auth/authUtils";
 import {
   BadRequestError,
   AuthFailureError,
@@ -96,22 +96,21 @@ class AccessService {
       const privateKey = crypto.randomBytes(64).toString("hex");
       const publicKey = crypto.randomBytes(64).toString("hex");
 
-      const keyStore = await keyTokenServices.createKeyToken({
-        userId: newShop._id.toString(),
-        publicKey,
-        privateKey,
-      });
-
-      if (!keyStore) {
-        throw new BadRequestError("Error: Error creating public key");
-      }
-
-      // create token pair
       const tokens = await createTokenPair(
         { userId: newShop._id.toString(), email },
         publicKey,
         privateKey,
       );
+      const keyStore = await keyTokenServices.createKeyToken({
+        userId: newShop._id.toString(),
+        publicKey,
+        privateKey,
+        refreshToken: tokens.refreshToken,
+      });
+
+      if (!keyStore) {
+        throw new BadRequestError("Error: Error creating public key");
+      }
       return {
         code: StatusCodes.CREATED,
         metadata: {
@@ -130,37 +129,23 @@ class AccessService {
   };
 
   handleRefreshToken = async ({
-    keyStore,
-    refreshToken,
+    auth,
   }: {
-    keyStore: TokenPayload;
-    refreshToken: string;
+    auth: AuthContext;
   }) => {
+    const { keyStore, payload, token: refreshToken } = auth;
     const foundTokenUsed =
       await keyTokenServices.findByRefreshTokenUsed(refreshToken);
     if (foundTokenUsed) {
-      const { userId, email, } = await verifyJWT(
-        refreshToken,
-        foundTokenUsed.privateKey,
-      );
-      console.log("🚀 ~ AccessService ~ email:", email)
       await keyTokenServices.removeKeyById(foundTokenUsed.user.toString());
       throw new ForbiddenError("Error: Refresh token has been used");
     }
 
-    if(keyStore.refreshToken !== refreshToken) {
+    if (keyStore.refreshToken !== refreshToken) {
       throw new ForbiddenError("Error: Refresh token does not match");
     }
 
-    const holderToken = await keyTokenServices.findByRefreshToken(refreshToken);
-    if (!holderToken) {
-      throw new AuthFailureError("Error: Refresh token not found");
-    }
-
-    const { userId, email } = await verifyJWT(
-      refreshToken,
-      holderToken.privateKey,
-    );
+    const { userId, email } = payload;
 
     const shop = await findByEmail({ email });
     if (!shop) {
@@ -169,8 +154,8 @@ class AccessService {
 
     const tokens = await createTokenPair(
       { userId, email },
-      holderToken.publicKey,
-      holderToken.privateKey,
+      keyStore.publicKey,
+      keyStore.privateKey,
     );
 
     await keyTokenServices.rotateRefreshToken({

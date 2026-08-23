@@ -1,10 +1,11 @@
 import { IApikey } from "../models/apikey.model";
-import { TokenPayload } from "../auth/authUtils";
+import { AuthContext, TokenPayload } from "../auth/authUtils";
 
 declare global {
   namespace Express {
     interface Request {
       objKey?: IApikey;
+      auth?: AuthContext;
       keyStore?: TokenPayload;
       refreshToken?: string;
     }

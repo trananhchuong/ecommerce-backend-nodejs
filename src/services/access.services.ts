@@ -2,7 +2,7 @@ import shopModel from "../models/shop.model";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import keyTokenServices from "./keyToken.services";
-import { createTokenPair, verifyJWT } from "../auth/authUtils";
+import { createTokenPair, TokenPayload, verifyJWT } from "../auth/authUtils";
 import {
   BadRequestError,
   AuthFailureError,
@@ -129,16 +129,27 @@ class AccessService {
     return await keyTokenServices.removeKeyById(userId);
   };
 
-  handleRefreshToken = async (refreshToken: string) => {
-    const foundToken =
+  handleRefreshToken = async ({
+    keyStore,
+    refreshToken,
+  }: {
+    keyStore: TokenPayload;
+    refreshToken: string;
+  }) => {
+    const foundTokenUsed =
       await keyTokenServices.findByRefreshTokenUsed(refreshToken);
-    if (foundToken) {
-      const { userId, email } = await verifyJWT(
+    if (foundTokenUsed) {
+      const { userId, email, } = await verifyJWT(
         refreshToken,
-        foundToken.privateKey,
+        foundTokenUsed.privateKey,
       );
-      await keyTokenServices.removeKeyById(foundToken.user.toString());
+      console.log("🚀 ~ AccessService ~ email:", email)
+      await keyTokenServices.removeKeyById(foundTokenUsed.user.toString());
       throw new ForbiddenError("Error: Refresh token has been used");
+    }
+
+    if(keyStore.refreshToken !== refreshToken) {
+      throw new ForbiddenError("Error: Refresh token does not match");
     }
 
     const holderToken = await keyTokenServices.findByRefreshToken(refreshToken);

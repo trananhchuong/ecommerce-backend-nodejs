@@ -6,6 +6,7 @@ declare global {
     interface Request {
       objKey?: IApikey;
       keyStore?: TokenPayload;
+      refreshToken?: string;
     }
   }
 }

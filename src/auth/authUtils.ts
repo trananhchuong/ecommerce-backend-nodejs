@@ -18,8 +18,8 @@ const HEADER = {
   API_KEY: "x-api-key",
   CLIENT_ID: "x-client-id",
   AUTHORIZATION: "authorization",
+  REFRESH_TOKEN: "x-refresh-token",
 };
-
 
 const createTokenPair = async (
   payload: TokenPayload,
@@ -66,36 +66,63 @@ const authentication = asyncHandler(
     }
 
     // 3
-    const accessToken = req.headers[HEADER.AUTHORIZATION];
-    if (!accessToken) {
-      throw new AuthFailureError("Invalid Request: Missing access token");
+    const refreshTokenHeader = req.headers[HEADER.REFRESH_TOKEN];
+    if (!refreshTokenHeader) {
+      throw new AuthFailureError("Invalid Request: Missing refresh token");
     }
-    const token = Array.isArray(accessToken) ? accessToken[0] : accessToken;
-
     try {
-      const decoded = JWT.verify(token, keyStore.publicKey) as TokenPayload;
+      const refreshToken = Array.isArray(refreshTokenHeader)
+        ? refreshTokenHeader[0]
+        : refreshTokenHeader;
+      const decoded = JWT.verify(
+        refreshToken,
+        keyStore.privateKey,
+      ) as TokenPayload;
 
       if (decoded.userId !== userId) {
         throw new AuthFailureError("Invalid Request: User ID mismatch");
       }
 
-      req.keyStore = decoded; // Attach the decoded payload to the request object
-
+      req.keyStore = {
+        ...decoded,
+        refreshToken: keyStore.refreshToken, // Attach the refresh token to the keyStore
+      };
+      req.refreshToken = refreshToken; // Attach the refresh token to the request object
       return next();
     } catch (err) {
-      throw new AuthFailureError("Invalid Request: Access token verification failed");
+      throw new AuthFailureError(
+        "Invalid Request: Access token verification failed",
+      );
     }
 
+    // const token = Array.isArray(refreshToken) ? refreshToken[0] : refreshToken;
+
+    // try {
+    //   const decoded = JWT.verify(token, keyStore.publicKey) as TokenPayload;
+
+    //   if (decoded.userId !== userId) {
+    //     throw new AuthFailureError("Invalid Request: User ID mismatch");
+    //   }
+
+    //   req.keyStore = decoded; // Attach the decoded payload to the request object
+
+    //   return next();
+    // } catch (err) {
+    //   throw new AuthFailureError("Invalid Request: Access token verification failed");
+    // }
   },
 );
 
-const verifyJWT = async (token: string, keySecret: string): Promise<TokenPayload> => {
+const verifyJWT = async (
+  token: string,
+  keySecret: string,
+): Promise<TokenPayload> => {
   return new Promise((resolve, reject) => {
     JWT.verify(token, keySecret, (err, decoded) => {
       if (err) return reject(err);
       resolve(decoded as TokenPayload);
     });
   });
-}
+};
 
 export { createTokenPair, authentication, verifyJWT };

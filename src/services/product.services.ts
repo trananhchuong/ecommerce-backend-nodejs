@@ -40,8 +40,9 @@ class Product {
     this.product_attributes = payload.product_attributes;
   }
 
-  async createProduct() {
+  async createProduct(product_id: string) {
     const newProduct = await productModel.create({
+      _id: product_id,
       product_name: this.product_name,
       product_thumb: this.product_thumb,
       product_description: this.product_description,
@@ -62,23 +63,29 @@ class Product {
 
 class Clothing extends Product {
   async createProduct() {
-    const newClothing = await clothingModel.create(this.product_attributes);
+    const newClothing = await clothingModel.create({
+      ...this.product_attributes,
+      product_shop: this.product_shop,
+    });
     if (!newClothing) {
       throw new BadRequestError("Error: create new Clothing error");
     }
 
-    return super.createProduct();
+    return await super.createProduct(newClothing._id.toString());
   }
 }
 
 class Electronics extends Product {
   async createProduct() {
-    const newElectronic = await electronicModel.create(this.product_attributes);
+    const newElectronic = await electronicModel.create({
+      ...this.product_attributes,
+      product_shop: this.product_shop,
+    });
     if (!newElectronic) {
       throw new BadRequestError("Error: create new Electronics error");
     }
 
-    return super.createProduct();
+    return await super.createProduct(newElectronic._id.toString());
   }
 }
 

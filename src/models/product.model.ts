@@ -1,4 +1,4 @@
-import { model, Schema, Document } from "mongoose";
+import { model, Schema, Document, Types } from "mongoose";
 
 const DOCUMENT_NAME = "Product";
 const COLLECTION_NAME = "Products";
@@ -10,7 +10,7 @@ interface IProduct extends Document {
   product_price: number;
   product_quantity: number;
   product_type: "Electronics" | "Clothing" | "Furniture";
-  product_shop?: string;
+  product_shop: Types.ObjectId;
   product_attributes: Schema.Types.Mixed;
 }
 
@@ -18,12 +18,14 @@ interface IClothing extends Document {
   brand: string;
   size?: string;
   material?: string;
+  product_shop: Types.ObjectId;
 }
 
 interface IElectronics {
   manufacturer: string;
   model?: string;
   color?: string;
+  product_shop: Types.ObjectId;
 }
 
 const productSchema = new Schema<IProduct>(
@@ -53,7 +55,9 @@ const productSchema = new Schema<IProduct>(
       enum: ["Electronics", "Clothing", "Furniture"],
     },
     product_shop: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true,
     },
     product_attributes: {
       type: Schema.Types.Mixed,
@@ -74,6 +78,11 @@ const clothingSchema = new Schema<IClothing>(
     },
     size: String,
     material: String,
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true,
+    },
   },
   {
     collection: "clothes",
@@ -89,6 +98,11 @@ const electronicSchema = new Schema<IElectronics>(
     },
     model: String,
     color: String,
+    product_shop: {
+      type: Schema.Types.ObjectId,
+      ref: "Shop",
+      required: true,
+    },
   },
   {
     collection: "electronics",

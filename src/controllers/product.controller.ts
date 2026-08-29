@@ -88,6 +88,29 @@ class ProductController {
       }),
     }).send(res);
   };
+
+  unPublishProductByShop = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const shopId = req.auth?.userId;
+    if (!shopId) {
+      throw new AuthFailureError("Invalid Request: Missing userId in headers");
+    }
+
+    const productId = Array.isArray(req.params.id)
+      ? req.params.id[0]
+      : req.params.id;
+
+    new SuccessResponse({
+      message: "Unpublish product success",
+      metadata: await productService.unPublishProductByShop({
+        product_shop: shopId,
+        product_id: productId,
+      }),
+    }).send(res);
+  };
 }
 
 export default new ProductController();

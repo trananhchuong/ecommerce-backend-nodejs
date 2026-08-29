@@ -13,6 +13,7 @@ import {
   findAllDraftsForShop,
   findAllPublishForShop,
   publishProductByShop,
+  unPublishProductByShop,
 } from "../models/repositories/product.repo";
 
 type ProductType = "Clothing" | "Electronics" | "Furniture";
@@ -195,6 +196,31 @@ class ProductFactory {
     }
 
     const updatedProduct = await publishProductByShop({
+      product_shop,
+      product_id,
+    });
+
+    if (!updatedProduct) {
+      throw new NotFoundError(
+        "Error: product not found or does not belong to this shop",
+      );
+    }
+
+    return updatedProduct;
+  }
+
+  static async unPublishProductByShop({
+    product_shop,
+    product_id,
+  }: {
+    product_shop: string;
+    product_id: string;
+  }) {
+    if (!product_id) {
+      throw new BadRequestError("Error: product id is required");
+    }
+
+    const updatedProduct = await unPublishProductByShop({
       product_shop,
       product_id,
     });

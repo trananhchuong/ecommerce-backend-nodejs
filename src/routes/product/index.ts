@@ -19,5 +19,9 @@ router.post(
   "/publish/:id",
   asyncHandler(ProductController.publishProductByShop),
 );
+router.post(
+  "/unpublish/:id",
+  asyncHandler(ProductController.unPublishProductByShop),
+);
 
 export default router;

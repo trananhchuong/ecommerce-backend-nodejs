@@ -56,5 +56,32 @@ const publishProductByShop = async ({
     .exec();
 };
 
-export { findAllDraftsForShop, findAllPublishForShop, publishProductByShop, queryProduct };
+const unPublishProductByShop = async ({
+  product_shop,
+  product_id,
+}: {
+  product_shop: string;
+  product_id: string;
+}) => {
+  return productModel
+    .findOneAndUpdate(
+      { _id: product_id, product_shop },
+      {
+        $set: { isDraft: true, isPublished: false },
+      },
+      { new: true },
+    )
+    .select("+isDraft +isPublished")
+    .populate("product_shop", "name email -_id")
+    .lean()
+    .exec();
+};
+
+export {
+  findAllDraftsForShop,
+  findAllPublishForShop,
+  publishProductByShop,
+  queryProduct,
+  unPublishProductByShop,
+};
 export type { QueryProductParams };

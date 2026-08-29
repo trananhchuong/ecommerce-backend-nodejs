@@ -35,6 +35,29 @@ const findAllPublishForShop = async ({
   return queryProduct({ query, limit, skip });
 };
 
+const searchProductByPublic = async ({
+  keySearch,
+  limit,
+  skip,
+}: {
+  keySearch: string;
+  limit: number;
+  skip: number;
+}) => {
+  return productModel
+    .find({
+      isPublished: true,
+      $text: { $search: keySearch },
+    })
+    .select("+isDraft +isPublished")
+    .populate("product_shop", "name email -_id")
+    .sort({ score: { $meta: "textScore" }, updatedAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean()
+    .exec();
+};
+
 const publishProductByShop = async ({
   product_shop,
   product_id,
@@ -82,6 +105,7 @@ export {
   findAllPublishForShop,
   publishProductByShop,
   queryProduct,
+  searchProductByPublic,
   unPublishProductByShop,
 };
 export type { QueryProductParams };

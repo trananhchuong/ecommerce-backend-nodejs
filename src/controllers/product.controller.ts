@@ -66,6 +66,33 @@ class ProductController {
     }).send(res);
   };
 
+  searchProductByPublic = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const rawKeySearch =
+      (Array.isArray(req.query.keySearch)
+        ? req.query.keySearch[0]
+        : req.query.keySearch) ??
+      (Array.isArray(req.params.keySearch)
+        ? req.params.keySearch[0]
+        : req.params.keySearch) ??
+      "";
+    const keySearch = typeof rawKeySearch === "string" ? rawKeySearch.trim() : "";
+    const skip = Number(req.query.skip ?? 0);
+    const limit = Number(req.query.limit ?? 50);
+
+    new SuccessResponse({
+      message: "Get list search product success",
+      metadata: await productService.searchProductByPublic({
+        keySearch,
+        skip,
+        limit,
+      }),
+    }).send(res);
+  };
+
   publishProductByShop = async (
     req: Request,
     res: Response,

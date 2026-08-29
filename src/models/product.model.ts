@@ -44,6 +44,7 @@ const productSchema = new Schema<IProduct>(
     product_name: {
       type: String,
       required: true,
+      text: true,
     },
     product_thumb: {
       type: String,
@@ -51,6 +52,7 @@ const productSchema = new Schema<IProduct>(
     },
     product_description: {
       type: String,
+      text: true,
     },
     product_slug: {
       type: String,
@@ -108,6 +110,8 @@ const productSchema = new Schema<IProduct>(
     timestamps: true,
   },
 );
+
+productSchema.index({ product_name: "text", product_description: "text" });
 
 productSchema.pre("save", function () {
   if (this.isModified("product_name")) {

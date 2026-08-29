@@ -13,6 +13,7 @@ import {
   findAllDraftsForShop,
   findAllPublishForShop,
   publishProductByShop,
+  searchProductByPublic,
   unPublishProductByShop,
 } from "../models/repositories/product.repo";
 
@@ -179,6 +180,32 @@ class ProductFactory {
 
     return findAllPublishForShop({
       query: { product_shop: shopId, isPublished: true },
+      skip: Math.floor(normalizedSkip),
+      limit: Math.floor(normalizedLimit),
+    });
+  }
+
+  static async searchProductByPublic({
+    keySearch,
+    skip = 0,
+    limit = 50,
+  }: {
+    keySearch: string;
+    skip?: number;
+    limit?: number;
+  }) {
+    const normalizedKeySearch = typeof keySearch === "string" ? keySearch.trim() : "";
+    if (!normalizedKeySearch) {
+      throw new BadRequestError("Error: keySearch is required");
+    }
+
+    const normalizedSkip = Number.isFinite(skip) ? Math.max(0, skip) : 0;
+    const normalizedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, limit))
+      : 50;
+
+    return searchProductByPublic({
+      keySearch: normalizedKeySearch,
       skip: Math.floor(normalizedSkip),
       limit: Math.floor(normalizedLimit),
     });

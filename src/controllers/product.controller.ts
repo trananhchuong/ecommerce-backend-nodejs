@@ -18,6 +18,24 @@ class ProductController {
       ),
     }).send(res);
   };
+
+  getAllDraftsForShop = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const skip = Number(req.query.skip);
+    const limit = Number(req.query.limit);
+
+    new SuccessResponse({
+      message: "Get all draft products success",
+      metadata: await productService.getAllDraftsForShop(
+        req.auth!.userId,
+        skip,
+        limit,
+      ),
+    }).send(res);
+  };
 }
 
 export default new ProductController();

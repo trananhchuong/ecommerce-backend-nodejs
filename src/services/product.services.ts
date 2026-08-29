@@ -6,6 +6,7 @@ import {
 } from "../models/product.model";
 import productModel from "../models/product.model";
 import { BadRequestError } from "../core/error.response";
+import { findAllDraftsForShop } from "../models/repositories/product.repo";
 
 type ProductType = "Clothing" | "Electronics" | "Furniture";
 
@@ -131,6 +132,23 @@ class ProductFactory {
     }
 
     return new productClass(payload).createProduct();
+  }
+
+  static async getAllDraftsForShop(
+    shopId: string,
+    skip = 0,
+    limit = 50,
+  ) {
+    const normalizedSkip = Number.isFinite(skip) ? Math.max(0, skip) : 0;
+    const normalizedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, limit))
+      : 50;
+
+    return findAllDraftsForShop({
+      query: { product_shop: shopId, isDraft: true },
+      skip: Math.floor(normalizedSkip),
+      limit: Math.floor(normalizedLimit),
+    });
   }
 }
 

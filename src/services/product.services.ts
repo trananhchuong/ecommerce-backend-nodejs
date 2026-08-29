@@ -5,8 +5,15 @@ import {
   IProduct,
 } from "../models/product.model";
 import productModel from "../models/product.model";
-import { BadRequestError } from "../core/error.response";
-import { findAllDraftsForShop } from "../models/repositories/product.repo";
+import {
+  BadRequestError,
+  NotFoundError,
+} from "../core/error.response";
+import {
+  findAllDraftsForShop,
+  findAllPublishForShop,
+  publishProductByShop,
+} from "../models/repositories/product.repo";
 
 type ProductType = "Clothing" | "Electronics" | "Furniture";
 
@@ -134,11 +141,15 @@ class ProductFactory {
     return new productClass(payload).createProduct();
   }
 
-  static async getAllDraftsForShop(
-    shopId: string,
+  static async getAllDraftsForShop({
+    shopId,
     skip = 0,
     limit = 50,
-  ) {
+  }: {
+    shopId: string;
+    skip?: number;
+    limit?: number;
+  }) {
     const normalizedSkip = Number.isFinite(skip) ? Math.max(0, skip) : 0;
     const normalizedLimit = Number.isFinite(limit)
       ? Math.min(100, Math.max(1, limit))
@@ -149,6 +160,52 @@ class ProductFactory {
       skip: Math.floor(normalizedSkip),
       limit: Math.floor(normalizedLimit),
     });
+  }
+
+  static async getAllPublishForShop({
+    shopId,
+    skip = 0,
+    limit = 50,
+  }: {
+    shopId: string;
+    skip?: number;
+    limit?: number;
+  }) {
+    const normalizedSkip = Number.isFinite(skip) ? Math.max(0, skip) : 0;
+    const normalizedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, limit))
+      : 50;
+
+    return findAllPublishForShop({
+      query: { product_shop: shopId, isPublished: true },
+      skip: Math.floor(normalizedSkip),
+      limit: Math.floor(normalizedLimit),
+    });
+  }
+
+  static async publishProductByShop({
+    product_shop,
+    product_id,
+  }: {
+    product_shop: string;
+    product_id: string;
+  }) {
+    if (!product_id) {
+      throw new BadRequestError("Error: product id is required");
+    }
+
+    const updatedProduct = await publishProductByShop({
+      product_shop,
+      product_id,
+    });
+
+    if (!updatedProduct) {
+      throw new NotFoundError(
+        "Error: product not found or does not belong to this shop",
+      );
+    }
+
+    return updatedProduct;
   }
 }
 

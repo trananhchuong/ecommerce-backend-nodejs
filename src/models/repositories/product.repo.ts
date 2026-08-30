@@ -1,5 +1,6 @@
 import type { QueryFilter } from "mongoose";
 import productModel, { IProduct } from "../product.model";
+import { getSelectData } from "../../utils";
 
 type QueryProductParams = {
   query: QueryFilter<IProduct>;
@@ -33,6 +34,39 @@ const findAllPublishForShop = async ({
   skip,
 }: QueryProductParams) => {
   return queryProduct({ query, limit, skip });
+};
+
+const findAllProducts = async ({
+  limit = 50,
+  sort = "ctime",
+  page = 1,
+  filter = {},
+  select = [],
+}: {
+  limit?: number;
+  sort?: "ctime" | "oldest";
+  page?: number;
+  filter?: QueryFilter<IProduct>;
+  select?: string[];
+}) => {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Number(limit)) : 50;
+  const safePage = Number.isFinite(page) ? Math.max(1, Number(page)) : 1;
+  const skip = (safePage - 1) * safeLimit;
+  const sortBy: Record<string, 1 | -1> =
+    sort === "ctime" ? { updatedAt: -1 } : { updatedAt: 1 };
+
+
+  return (
+    productModel
+      .find(filter)
+      .select(getSelectData(select))
+      .populate("product_shop", "name email -_id")
+      .sort(sortBy)
+      .skip(skip)
+      .limit(safeLimit)
+      .lean()
+      .exec()
+  );
 };
 
 const searchProductByPublic = async ({
@@ -102,6 +136,7 @@ const unPublishProductByShop = async ({
 
 export {
   findAllDraftsForShop,
+  findAllProducts,
   findAllPublishForShop,
   publishProductByShop,
   queryProduct,

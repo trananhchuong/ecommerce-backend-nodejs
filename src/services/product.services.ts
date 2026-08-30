@@ -5,12 +5,10 @@ import {
   IProduct,
 } from "../models/product.model";
 import productModel from "../models/product.model";
-import {
-  BadRequestError,
-  NotFoundError,
-} from "../core/error.response";
+import { BadRequestError, NotFoundError } from "../core/error.response";
 import {
   findAllDraftsForShop,
+  findAllProducts,
   findAllPublishForShop,
   publishProductByShop,
   searchProductByPublic,
@@ -137,7 +135,7 @@ class ProductFactory {
   ): Promise<IProduct> {
     const productClass = ProductFactory.productRegistry[type];
     if (!productClass) {
-        throw new BadRequestError(`Error: Invalid Product Type ${type}`);
+      throw new BadRequestError(`Error: Invalid Product Type ${type}`);
     }
 
     return new productClass(payload).createProduct();
@@ -185,6 +183,27 @@ class ProductFactory {
     });
   }
 
+  static async getAllProducts({
+    skip = 0,
+    limit = 50,
+  }: {
+    skip?: number;
+    limit?: number;
+  } = {}) {
+    const normalizedSkip = Number.isFinite(skip) ? Math.max(0, skip) : 0;
+    const normalizedLimit = Number.isFinite(limit)
+      ? Math.min(100, Math.max(1, limit))
+      : 50;
+
+    return findAllProducts({
+      filter: { isPublished: true },
+      page: Math.floor(normalizedSkip / normalizedLimit) + 1,
+      limit: Math.floor(normalizedLimit),
+      sort: "ctime",
+      select: ['product_name', 'product_thumb', 'product_price'],
+    });
+  }
+
   static async searchProductByPublic({
     keySearch,
     skip = 0,
@@ -194,7 +213,8 @@ class ProductFactory {
     skip?: number;
     limit?: number;
   }) {
-    const normalizedKeySearch = typeof keySearch === "string" ? keySearch.trim() : "";
+    const normalizedKeySearch =
+      typeof keySearch === "string" ? keySearch.trim() : "";
     if (!normalizedKeySearch) {
       throw new BadRequestError("Error: keySearch is required");
     }

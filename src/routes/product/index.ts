@@ -5,6 +5,7 @@ import { asyncHandler } from "../../helper/asyncHandler";
 
 const router = express.Router();
 
+router.get("/all", asyncHandler(ProductController.getAllProducts));
 router.get("/search", asyncHandler(ProductController.searchProductByPublic));
 router.get(
   "/search/:keySearch",

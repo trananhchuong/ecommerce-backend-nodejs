@@ -66,6 +66,19 @@ class ProductController {
     }).send(res);
   };
 
+  getAllProducts = async (req: Request, res: Response, next: NextFunction) => {
+    const skip = Number(req.query.skip ?? 0);
+    const limit = Number(req.query.limit ?? 50);
+
+    new SuccessResponse({
+      message: "Get all products success",
+      metadata: await productService.getAllProducts({
+        skip,
+        limit,
+      }),
+    }).send(res);
+  };
+
   searchProductByPublic = async (
     req: Request,
     res: Response,

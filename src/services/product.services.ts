@@ -5,7 +5,7 @@ import {
   IProduct,
 } from "../models/product.model";
 import productModel from "../models/product.model";
-import { BadRequestError, NotFoundError } from "../core/error.response";
+import { BadRequestError, ForbiddenError, NotFoundError } from "../core/error.response";
 import {
   findAllDraftsForShop,
   findAllProducts,
@@ -14,6 +14,7 @@ import {
   publishProductByShop,
   searchProductByPublic,
   unPublishProductByShop,
+  updateProductById,
 } from "../models/repositories/product.repo";
 
 type ProductType = "Clothing" | "Electronics" | "Furniture";
@@ -285,6 +286,34 @@ class ProductFactory {
     const updatedProduct = await unPublishProductByShop({
       product_shop,
       product_id,
+    });
+
+    if (!updatedProduct) {
+      throw new NotFoundError(
+        "Error: product not found or does not belong to this shop",
+      );
+    }
+
+    return updatedProduct;
+  }
+
+  static async updateProduct({
+    product_id,
+    bodyUpdate,
+    product_shop,
+  }: {
+    product_id: string;
+    bodyUpdate: Record<string, unknown>;
+    product_shop: string;
+  }) {
+    if (!product_id) {
+      throw new BadRequestError("Error: product id is required");
+    }
+
+    const updatedProduct = await updateProductById({
+      product_id,
+      bodyUpdate,
+      product_shop,
     });
 
     if (!updatedProduct) {

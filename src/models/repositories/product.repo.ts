@@ -150,6 +150,31 @@ const unPublishProductByShop = async ({
     .exec();
 };
 
+const updateProductById = async ({
+  product_id,
+  bodyUpdate,
+  product_shop,
+}: {
+  product_id: string;
+  bodyUpdate: Record<string, unknown>;
+  product_shop: string;
+}) => {
+  // Remove undefined fields to perform partial update
+  const updatePayload = Object.fromEntries(
+    Object.entries(bodyUpdate).filter(([, value]) => value !== undefined),
+  );
+
+  return productModel
+    .findOneAndUpdate(
+      { _id: product_id, product_shop },
+      { $set: updatePayload },
+      { new: true },
+    )
+    .populate("product_shop", "name email -_id")
+    .lean()
+    .exec();
+};
+
 export {
   findAllDraftsForShop,
   findAllProducts,
@@ -159,5 +184,6 @@ export {
   queryProduct,
   searchProductByPublic,
   unPublishProductByShop,
+  updateProductById,
 };
 export type { QueryProductParams };

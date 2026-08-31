@@ -6,11 +6,11 @@ import { asyncHandler } from "../../helper/asyncHandler";
 const router = express.Router();
 
 router.get("/all", asyncHandler(ProductController.getAllProducts));
-router.get("/search", asyncHandler(ProductController.searchProductByPublic));
 router.get(
   "/search/:keySearch",
   asyncHandler(ProductController.searchProductByPublic),
 );
+router.get("/detail/:product_id", asyncHandler(ProductController.findProduct));
 
 router.use(authentication);
 router.post("/create", asyncHandler(ProductController.createProduct));

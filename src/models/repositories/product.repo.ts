@@ -92,6 +92,22 @@ const searchProductByPublic = async ({
     .exec();
 };
 
+const findProductById = async ({ product_id }: { product_id: string }) => {
+  return productModel
+    .findById(product_id)
+    .select(
+      getSelectData([
+        "product_name",
+        "product_thumb",
+        "product_price",
+        "product_description",
+      ]),
+    )
+    .populate("product_shop", "name email -_id")
+    .lean()
+    .exec();
+};
+
 const publishProductByShop = async ({
   product_shop,
   product_id,
@@ -138,6 +154,7 @@ export {
   findAllDraftsForShop,
   findAllProducts,
   findAllPublishForShop,
+  findProductById,
   publishProductByShop,
   queryProduct,
   searchProductByPublic,

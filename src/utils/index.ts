@@ -12,4 +12,8 @@ const getSelectData = (fields: string[] = []) => {
   return Object.fromEntries(fields.map((field) => [field, 1]));
 };
 
-export { getInfoData, getSelectData };
+const unGetSelectData = (select: Record<string, number> = {}) => {
+  return Object.keys(select).filter((field) => select[field] === 1);
+};
+
+export { getInfoData, getSelectData, unGetSelectData };

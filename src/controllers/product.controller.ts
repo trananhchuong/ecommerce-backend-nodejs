@@ -106,6 +106,19 @@ class ProductController {
     }).send(res);
   };
 
+  findProduct = async (req: Request, res: Response, next: NextFunction) => {
+    const productId = Array.isArray(req.params.product_id)
+      ? req.params.product_id[0]
+      : req.params.product_id;
+
+    new SuccessResponse({
+      message: "Get list detail product success",
+      metadata: await productService.findProduct({
+        product_id: productId,
+      }),
+    }).send(res);
+  };
+
   publishProductByShop = async (
     req: Request,
     res: Response,

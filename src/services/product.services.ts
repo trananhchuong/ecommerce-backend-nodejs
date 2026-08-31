@@ -10,6 +10,7 @@ import {
   findAllDraftsForShop,
   findAllProducts,
   findAllPublishForShop,
+  findProductById,
   publishProductByShop,
   searchProductByPublic,
   unPublishProductByShop,
@@ -202,6 +203,20 @@ class ProductFactory {
       sort: "ctime",
       select: ['product_name', 'product_thumb', 'product_price'],
     });
+  }
+
+  static async findProduct({ product_id }: { product_id: string }) {
+    if (!product_id) {
+      throw new BadRequestError("Error: product id is required");
+    }
+
+    const product = await findProductById({ product_id });
+
+    if (!product) {
+      throw new NotFoundError("Error: product not found");
+    }
+
+    return product;
   }
 
   static async searchProductByPublic({

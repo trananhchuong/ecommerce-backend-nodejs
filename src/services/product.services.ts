@@ -16,6 +16,7 @@ import {
   unPublishProductByShop,
   updateProductById,
 } from "../models/repositories/product.repo";
+import { insertInventory } from "../models/repositories/inventory.repo";
 
 type ProductType = "Clothing" | "Electronics" | "Furniture";
 
@@ -70,6 +71,17 @@ class Product {
 
     if (!newProduct) {
       throw new BadRequestError("Error: create new Product error");
+    }
+
+    try {
+      await insertInventory({
+        productId: newProduct._id.toString(),
+        shopId: this.product_shop ?? "",
+        stock: this.product_quantity,
+        location: "Unknown",
+      });
+    } catch (error) {
+      throw new BadRequestError("Error: create new Inventory error");
     }
 
     return newProduct;

@@ -4,6 +4,13 @@ import { CREATED, OK } from "../core/success.response";
 import discountService from "../services/discount.services";
 
 class DiscountController {
+  getDiscountCodesWithProducts = async (req: Request, res: Response) => {
+    new OK({
+      message: "Get available discount codes success",
+      metadata: await discountService.getDiscountCodesWithProducts(req.query),
+    }).send(res);
+  };
+
   createDiscountCode = async (req: Request, res: Response) => {
     const shopId = req.auth?.userId;
     if (!shopId) {
@@ -29,6 +36,18 @@ class DiscountController {
         Array.isArray(req.params.discount_id) ? "" : req.params.discount_id,
         req.body,
       ),
+    }).send(res);
+  };
+
+  getAllDiscountCodesByShop = async (req: Request, res: Response) => {
+    const shopId = req.auth?.userId;
+    if (!shopId) {
+      throw new AuthFailureError("Invalid Request: Missing userId in headers");
+    }
+
+    new OK({
+      message: "Get discount codes by shop success",
+      metadata: await discountService.getAllDiscountCodesByShop(shopId, req.query),
     }).send(res);
   };
 }

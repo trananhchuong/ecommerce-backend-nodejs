@@ -1,6 +1,11 @@
 import { Types } from "mongoose";
 import discountModel from "../models/discount.model";
 import productModel from "../models/product.model";
+import { findPublishedProductsForDiscounts } from "../models/repositories/product.repo";
+import {
+	countDiscountCodesByShop,
+	findAllDiscountCodesByShop,
+} from "../models/repositories/discount.repo";
 import {
 	BadRequestError,
 	ConflictRequestError,
@@ -59,6 +64,64 @@ const normalizeProductIds = (productIds: unknown) => {
 		throw new BadRequestError("Error: invalid product id");
 	}
 	return normalizedProductIds;
+};
+
+const MAX_AVAILABLE_DISCOUNTS_LIMIT = 100;
+const DISCOUNT_LIST_FIELDS = [
+	"_id",
+	"discount_name",
+	"discount_description",
+	"discount_type",
+	"discount_value",
+	"discount_code",
+	"discount_start_date",
+	"discount_end_date",
+	"discount_max_uses",
+	"discount_uses_count",
+	"discount_max_uses_per_user",
+	"discount_min_order_value",
+	"discount_shopId",
+	"discount_is_active",
+	"discount_applies_to",
+	"discount_product_ids",
+	"createdAt",
+	"updatedAt",
+] as const;
+
+type DiscountListQuery = {
+	page?: unknown;
+	limit?: unknown;
+	sort?: unknown;
+	filter?: unknown;
+	select?: unknown;
+};
+
+type AvailableDiscountQuery = {
+	shopId?: unknown;
+	code?: unknown;
+	page?: unknown;
+	limit?: unknown;
+};
+
+const getQueryValue = (value: unknown, field: string) => {
+	if (value !== undefined && typeof value !== "string") {
+		throw new BadRequestError(`Error: ${field} must be a string`);
+	}
+	return value;
+};
+
+const parsePositiveInteger = (value: unknown, field: string, defaultValue: number) => {
+	if (value === undefined) {
+		return defaultValue;
+	}
+	if (typeof value !== "string" || !/^\d+$/.test(value)) {
+		throw new BadRequestError(`Error: ${field} must be a positive integer`);
+	}
+	const parsedValue = Number(value);
+	if (!Number.isSafeInteger(parsedValue) || parsedValue < 1) {
+		throw new BadRequestError(`Error: ${field} must be a positive integer`);
+	}
+	return parsedValue;
 };
 
 const validateDiscountPayload = (
@@ -156,6 +219,123 @@ const validateDiscountPayload = (
 };
 
 class DiscountService {
+	async getAllDiscountCodesByShop(shopId: string, query: DiscountListQuery) {
+		if (!Types.ObjectId.isValid(shopId)) {
+			throw new BadRequestError("Error: invalid shop id");
+		}
+
+		const page = parsePositiveInteger(query.page, "page", 1);
+		const limit = parsePositiveInteger(query.limit, "limit", 50);
+		if (limit > MAX_AVAILABLE_DISCOUNTS_LIMIT) {
+			throw new BadRequestError(
+				`Error: limit cannot exceed ${MAX_AVAILABLE_DISCOUNTS_LIMIT}`,
+			);
+		}
+
+		const sort = getQueryValue(query.sort, "sort") ?? "ctime";
+		if (sort !== "ctime" && sort !== "oldest") {
+			throw new BadRequestError("Error: sort must be ctime or oldest");
+		}
+
+		const filter = getQueryValue(query.filter, "filter") ?? "all";
+		if (!["active", "inactive", "all"].includes(filter)) {
+			throw new BadRequestError("Error: filter must be active, inactive, or all");
+		}
+
+		const selectValue = getQueryValue(query.select, "select");
+		const select = selectValue === undefined
+			? []
+			: selectValue.split(",").map((field) => field.trim()).filter(Boolean);
+		if (selectValue !== undefined && select.length === 0) {
+			throw new BadRequestError("Error: select must contain at least one field");
+		}
+		const invalidField = select.find(
+			(field) => !(DISCOUNT_LIST_FIELDS as readonly string[]).includes(field),
+		);
+		if (invalidField) {
+			throw new BadRequestError(`Error: field ${invalidField} cannot be selected`);
+		}
+
+		const discountFilter = {
+			discount_shopId: shopId,
+			...(filter === "active" ? { discount_is_active: true } : {}),
+			...(filter === "inactive" ? { discount_is_active: false } : {}),
+		};
+		const skip = (page - 1) * limit;
+		const [items, total] = await Promise.all([
+			findAllDiscountCodesByShop({
+				query: discountFilter,
+				limit,
+				skip,
+				sort,
+				select,
+			}),
+			countDiscountCodesByShop(discountFilter),
+		]);
+
+		return {
+			items,
+			pagination: {
+				page,
+				limit,
+				total,
+				totalPages: Math.ceil(total / limit),
+			},
+		};
+	}
+
+	async getDiscountCodesWithProducts(query: AvailableDiscountQuery) {
+		const shopId = getQueryValue(query.shopId, "shopId");
+		const code = getQueryValue(query.code, "code");
+		if (shopId !== undefined && !Types.ObjectId.isValid(shopId)) {
+			throw new BadRequestError("Error: invalid shop id");
+		}
+		const normalizedCode = code?.trim().toUpperCase();
+		const page = parsePositiveInteger(query.page, "page", 1);
+		const limit = parsePositiveInteger(query.limit, "limit", 50);
+		if (limit > MAX_AVAILABLE_DISCOUNTS_LIMIT) {
+			throw new BadRequestError(
+				`Error: limit cannot exceed ${MAX_AVAILABLE_DISCOUNTS_LIMIT}`,
+			);
+		}
+
+		const now = new Date();
+		const discounts = await discountModel
+			.find({
+				...(shopId ? { discount_shopId: shopId } : {}),
+				...(normalizedCode ? { discount_code: normalizedCode } : {}),
+				discount_is_active: true,
+				discount_start_date: { $lte: now },
+				discount_end_date: { $gt: now },
+				$expr: { $lt: ["$discount_uses_count", "$discount_max_uses"] },
+			})
+			.select("-discount_users_used")
+			.sort({ updatedAt: -1, _id: -1 })
+			.skip((page - 1) * limit)
+			.limit(limit)
+			.lean()
+			.exec();
+
+		const products = await findPublishedProductsForDiscounts(
+			discounts.map((discount) => ({
+				shopId: discount.discount_shopId.toString(),
+				appliesTo: discount.discount_applies_to,
+				productIds: discount.discount_product_ids.map((productId) => productId.toString()),
+			})),
+		);
+
+		return discounts.map((discount) => ({
+			...discount,
+			products: products.filter((product) => {
+				const sameShop = product.product_shop.toString() === discount.discount_shopId.toString();
+				return sameShop && (
+					discount.discount_applies_to === "all" ||
+					discount.discount_product_ids.some((productId) => productId.toString() === product._id.toString())
+				);
+			}),
+		}));
+	}
+
 	async createDiscountCode(
 		shopId: string,
 		payload: Partial<CreateDiscountPayload>,

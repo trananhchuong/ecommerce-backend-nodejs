@@ -1,3 +1,4 @@
+const { Types } = require("mongoose");
 import pick from "lodash/pick";
 interface GetInfoDataParams {
   fields?: string[];
@@ -12,8 +13,12 @@ const getSelectData = (fields: string[] = []) => {
   return Object.fromEntries(fields.map((field) => [field, 1]));
 };
 
-const unGetSelectData = (select: Record<string, number> = {}) => {
-  return Object.keys(select).filter((field) => select[field] === 1);
+const unGetSelectData = (fields: string[] = []) => {
+  return fields.map((field) => `-${field}`).join(" ");
 };
 
-export { getInfoData, getSelectData, unGetSelectData };
+const convertToObjectId = (id: string) => {
+  return Types.ObjectId(id);
+};
+
+export { getInfoData, getSelectData, unGetSelectData, convertToObjectId };

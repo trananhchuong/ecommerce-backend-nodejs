@@ -55,18 +55,15 @@ const findAllProducts = async ({
   const sortBy: Record<string, 1 | -1> =
     sort === "ctime" ? { updatedAt: -1 } : { updatedAt: 1 };
 
-
-  return (
-    productModel
-      .find(filter)
-      .select(getSelectData(select))
-      .populate("product_shop", "name email -_id")
-      .sort(sortBy)
-      .skip(skip)
-      .limit(safeLimit)
-      .lean()
-      .exec()
-  );
+  return productModel
+    .find(filter)
+    .select(getSelectData(select))
+    .populate("product_shop", "name email -_id")
+    .sort(sortBy)
+    .skip(skip)
+    .limit(safeLimit)
+    .lean()
+    .exec();
 };
 
 const searchProductByPublic = async ({

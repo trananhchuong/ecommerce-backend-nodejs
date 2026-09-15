@@ -1,6 +1,6 @@
 import type { QueryFilter } from "mongoose";
 import discountModel, { IDiscount } from "../discount.model";
-import { getSelectData } from "../../utils";
+import { getSelectData, unGetSelectData } from "../../utils";
 
 const findAllDiscountCodesByShop = async ({
   query,
@@ -30,4 +30,74 @@ const findAllDiscountCodesByShop = async ({
 const countDiscountCodesByShop = (query: QueryFilter<IDiscount>) =>
   discountModel.countDocuments(query).exec();
 
-export { countDiscountCodesByShop, findAllDiscountCodesByShop };
+const findDiscountByShopAndCode = (shopId: string, code: string) =>
+  discountModel
+    .findOne({ discount_shopId: shopId, discount_code: code })
+    .lean()
+    .exec();
+
+const findAllDiscountCodesUnSelect = async ({
+  limit = 50,
+  page = 1,
+  sort,
+  filter,
+  unSelect = [],
+}: {
+  limit: number;
+  page: number;
+  sort: "ctime" | "oldest";
+  filter: QueryFilter<IDiscount>;
+  unSelect: string[];
+}) => {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Number(limit)) : 50;
+  const safePage = Number.isFinite(page) ? Math.max(1, Number(page)) : 1;
+  const skip = (safePage - 1) * safeLimit;
+  const sortBy: Record<string, 1 | -1> =
+    sort === "ctime" ? { updatedAt: -1 } : { updatedAt: 1 };
+
+  return discountModel
+    .find(filter)
+    .select(unGetSelectData(unSelect))
+    .sort(sortBy)
+    .skip(skip)
+    .limit(safeLimit)
+    .lean()
+    .exec();
+};
+
+const findAllDiscountCodesSelect = async ({
+  limit = 50,
+  page = 1,
+  sort,
+  filter,
+  select = [],
+}: {
+  limit: number;
+  page: number;
+  sort: "ctime" | "oldest";
+  filter: QueryFilter<IDiscount>;
+  select: string[];
+}) => {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Number(limit)) : 50;
+  const safePage = Number.isFinite(page) ? Math.max(1, Number(page)) : 1;
+  const skip = (safePage - 1) * safeLimit;
+  const sortBy: Record<string, 1 | -1> =
+    sort === "ctime" ? { updatedAt: -1 } : { updatedAt: 1 };
+
+  return discountModel
+    .find(filter)
+    .select(getSelectData(select))
+    .sort(sortBy)
+    .skip(skip)
+    .limit(safeLimit)
+    .lean()
+    .exec();
+};
+
+export {
+  countDiscountCodesByShop,
+  findAllDiscountCodesByShop,
+  findAllDiscountCodesUnSelect,
+  findAllDiscountCodesSelect,
+  findDiscountByShopAndCode,
+};

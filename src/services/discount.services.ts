@@ -11,7 +11,10 @@ Discount Services
 import { BadRequestError, NotFoundError } from "../core/error.response";
 import discountModel from "../models/discount.model";
 import { findAllProducts } from "../models/repositories/product.repo";
-import { findAllDiscountCodesUnSelect } from "../models/repositories/discount.repo";
+import {
+  checkDiscountExists,
+  findAllDiscountCodesUnSelect,
+} from "../models/repositories/discount.repo";
 import { convertToObjectId } from "../utils";
 
 class DiscountService {
@@ -252,6 +255,147 @@ class DiscountService {
     });
 
     return discount;
+  }
+
+  /*
+    Apply discount code for a user
+  */
+  async getDiscountAmount({
+    codeId,
+    userId,
+    shopId,
+    products,
+  }: {
+    codeId: string;
+    userId: string;
+    shopId: string;
+    products: Array<{
+      quantity: number;
+      product_price: number;
+    }>;
+  }) {
+    const foundDiscount = await checkDiscountExists({
+      discount_code: codeId,
+      discount_shopId: convertToObjectId(shopId),
+    });
+
+    if (!foundDiscount) {
+      throw new NotFoundError("Error: discount code not found");
+    }
+
+    const {
+      discount_is_active,
+      discount_max_uses,
+      discount_max_uses_per_user,
+      discount_start_date,
+      discount_end_date,
+      discount_min_order_value,
+      discount_users_used,
+      discount_type,
+      discount_value,
+    } = foundDiscount;
+
+    if (!discount_is_active) {
+      throw new BadRequestError("Error: discount code is not active");
+    }
+
+    if (!discount_max_uses) {
+      throw new BadRequestError("Error: discount code has no remaining uses");
+    }
+
+    if (
+      new Date() < new Date(discount_start_date) ||
+      new Date() > new Date(discount_end_date)
+    ) {
+      throw new BadRequestError(
+        "Error: discount code is not valid at this time",
+      );
+    }
+
+    let totalOrderValue = 0;
+
+    if (discount_min_order_value > 0) {
+      // get total
+      totalOrderValue = products.reduce((total, product) => {
+        return total + product.quantity * product.product_price;
+      }, 0);
+
+      if (totalOrderValue < discount_min_order_value) {
+        throw new BadRequestError(
+          `Error: total order value must be at least ${discount_min_order_value} to apply this discount code`,
+        );
+      }
+    }
+
+    if (discount_max_uses_per_user > 0) {
+      const userUseDiscount = discount_users_used.find(
+        (user) => user.toString() === userId,
+      );
+      if (userUseDiscount) {
+        throw new BadRequestError(
+          "Error: user has already used this discount code",
+        );
+      }
+    }
+
+    const amount =
+      discount_type === "fixed_amount"
+        ? discount_value
+        : (totalOrderValue * discount_value) / 100;
+
+    return {
+      totalOrderValue,
+      discountAmount: amount,
+      totalPrice: totalOrderValue - amount,
+    };
+  }
+
+  async deleteDiscountCode({
+    shopId,
+    codeId,
+  }: {
+    shopId: string;
+    codeId: string;
+  }) {
+    const deletedDiscount = await discountModel.findOneAndDelete({
+      discount_code: convertToObjectId(codeId),
+      discount_shopId: convertToObjectId(shopId),
+    });
+    return deletedDiscount;
+  }
+
+  async cancelDiscountCode({
+    shopId,
+    codeId,
+    userId,
+  }: {
+    shopId: string;
+    codeId: string;
+    userId: string;
+  }) {
+    const foundDiscount = await checkDiscountExists({
+      discount_code: codeId,
+      discount_shopId: convertToObjectId(shopId),
+    });
+
+    if (!foundDiscount) {
+      throw new NotFoundError("Error: discount code not found");
+    }
+
+    if (!foundDiscount.discount_is_active) {
+      throw new BadRequestError("Error: discount code is not active");
+    }
+
+    const canceledDiscount = await discountModel.findByIdAndUpdate(
+      foundDiscount._id,
+      {
+        $pull: { discount_users_used: convertToObjectId(userId) },
+        $inc: { discount_uses_count: -1, discount_max_uses: 1 },
+      },
+      { new: true },
+    );
+
+	return canceledDiscount;
   }
 }
 

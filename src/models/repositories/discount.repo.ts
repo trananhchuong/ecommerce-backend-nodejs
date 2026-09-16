@@ -94,10 +94,15 @@ const findAllDiscountCodesSelect = async ({
     .exec();
 };
 
+const checkDiscountExists = async (filter: QueryFilter<IDiscount>) => {
+  return await discountModel.findOne(filter).lean();
+};
+
 export {
   countDiscountCodesByShop,
   findAllDiscountCodesByShop,
   findAllDiscountCodesUnSelect,
   findAllDiscountCodesSelect,
   findDiscountByShopAndCode,
+  checkDiscountExists,
 };

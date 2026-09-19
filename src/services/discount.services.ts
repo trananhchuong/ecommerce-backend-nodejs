@@ -9,7 +9,7 @@ Discount Services
 */
 
 import { BadRequestError, NotFoundError } from "../core/error.response";
-import discountModel from "../models/discount.model";
+import discountModel, { IDiscount } from "../models/discount.model";
 import { findAllProducts } from "../models/repositories/product.repo";
 import {
   checkDiscountExists,
@@ -17,8 +17,64 @@ import {
 } from "../models/repositories/discount.repo";
 import { convertToObjectId } from "../utils";
 
+type DiscountType = "fixed_amount" | "percentage";
+type DiscountScope = "all" | "specific";
+
+interface CreateDiscountPayload {
+  name: string;
+  description: string;
+  code: string;
+  discount_start_date: string | Date;
+  discount_end_date: string | Date;
+  max_uses: number;
+  max_uses_per_user: number;
+  min_order_value?: number;
+  discount_type: DiscountType;
+  discount_value: number;
+  uses_count?: number;
+  users_used?: string[];
+  is_active?: boolean;
+  applies_to: DiscountScope;
+  product_ids?: string[];
+}
+
+interface UpdateDiscountPayload {
+  name?: string;
+  description?: string;
+  code?: string;
+  discount_start_date?: string | Date;
+  discount_end_date?: string | Date;
+  max_uses?: number;
+  max_uses_per_user?: number;
+  min_order_value?: number;
+  discount_type?: DiscountType;
+  discount_value?: number;
+  is_active?: boolean;
+  applies_to?: DiscountScope;
+  product_ids?: string[];
+}
+
+type DiscountUpdateData = Partial<{
+  discount_name: string;
+  discount_description: string;
+  discount_code: string;
+  discount_type: DiscountType;
+  discount_value: number;
+  discount_max_uses: number;
+  discount_max_uses_per_user: number;
+  discount_min_order_value: number;
+  discount_is_active: boolean;
+  discount_start_date: Date;
+  discount_end_date: Date;
+  discount_applies_to: DiscountScope;
+  discount_product_ids: ReturnType<typeof convertToObjectId>[];
+}>;
+
 class DiscountService {
-  async createDiscountCode(shopId: string, payload: any): Promise<any> {
+  async createDiscountCode(
+    shopId: string,
+    payload: CreateDiscountPayload,
+  ): Promise<IDiscount> {
     const {
       name,
       description,
@@ -86,8 +142,8 @@ class DiscountService {
   async updateDiscountCode(
     shopId: string,
     discountId: string,
-    payload: any,
-  ): Promise<any> {
+    payload: UpdateDiscountPayload,
+  ): Promise<IDiscount | null> {
     const discountObjectId = convertToObjectId(discountId);
     const shopObjectId = convertToObjectId(shopId);
     const discount = await discountModel.findOne({
@@ -131,8 +187,22 @@ class DiscountService {
       );
     }
 
-    const updateData: Record<string, any> = {};
-    const fieldMap: Record<string, string> = {
+    const updateData: DiscountUpdateData = {};
+    const fieldMap: Record<
+      keyof Pick<
+        UpdateDiscountPayload,
+        | "name"
+        | "description"
+        | "code"
+        | "discount_type"
+        | "discount_value"
+        | "max_uses"
+        | "max_uses_per_user"
+        | "min_order_value"
+        | "is_active"
+      >,
+      keyof DiscountUpdateData
+    > = {
       name: "discount_name",
       description: "discount_description",
       code: "discount_code",
@@ -144,9 +214,13 @@ class DiscountService {
       is_active: "discount_is_active",
     };
 
-    for (const [payloadField, modelField] of Object.entries(fieldMap)) {
-      if (payload[payloadField] !== undefined) {
-        updateData[modelField] = payload[payloadField];
+    for (const [payloadField, modelField] of Object.entries(fieldMap) as [
+      keyof UpdateDiscountPayload,
+      keyof DiscountUpdateData,
+    ][]) {
+      const value = payload[payloadField];
+      if (value !== undefined) {
+        Object.assign(updateData, { [modelField]: value });
       }
     }
 
@@ -242,8 +316,8 @@ class DiscountService {
     limit = 10,
     page = 1,
   }: {
-    limit: number;
-    page: number;
+    limit?: number;
+    page?: number;
     shopId: string;
   }) {
     const discount = await findAllDiscountCodesUnSelect({
@@ -358,9 +432,14 @@ class DiscountService {
     codeId: string;
   }) {
     const deletedDiscount = await discountModel.findOneAndDelete({
-      discount_code: convertToObjectId(codeId),
+      discount_code: codeId,
       discount_shopId: convertToObjectId(shopId),
     });
+
+    if (!deletedDiscount) {
+      throw new NotFoundError("Error: discount code not found");
+    }
+
     return deletedDiscount;
   }
 

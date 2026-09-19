@@ -18,7 +18,7 @@ const unGetSelectData = (fields: string[] = []) => {
 };
 
 const convertToObjectId = (id: string) => {
-  return Types.ObjectId(id);
+  return new Types.ObjectId(id);
 };
 
 export { getInfoData, getSelectData, unGetSelectData, convertToObjectId };

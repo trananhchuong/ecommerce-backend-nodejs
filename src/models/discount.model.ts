@@ -3,7 +3,7 @@ import { Document, model, Schema, Types } from "mongoose";
 const DOCUMENT_NAME = "Discount";
 const COLLECTION_NAME = "discounts";
 
-interface IDiscount extends Document {
+export interface IDiscount extends Document {
   discount_name: string;
   discount_description: string;
   discount_type: "fixed_amount" | "percentage";
@@ -118,5 +118,4 @@ const discountSchema = new Schema<IDiscount>(
 discountSchema.index({ discount_shopId: 1, discount_code: 1 }, { unique: true });
 
 export default model<IDiscount>(DOCUMENT_NAME, discountSchema);
-export type { IDiscount };
 

@@ -6,10 +6,10 @@ import { asyncHandler } from "../../helper/asyncHandler";
 const router = express.Router();
 
 router.get("/all", asyncHandler(DiscountController.getDiscountCodesWithProducts));
-router.post("/amount", asyncHandler(DiscountController.getDiscountAmount));
 
 router.use(authentication);
 
+router.post("/amount", asyncHandler(DiscountController.getDiscountAmount));
 router.get("/shop/all", asyncHandler(DiscountController.getAllDiscountCodesByShop));
 router.post("/create", asyncHandler(DiscountController.createDiscountCode));
 router.patch("/update/:discount_id", asyncHandler(DiscountController.updateDiscountCode));

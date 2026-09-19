@@ -44,8 +44,8 @@ router.use(apiKey);
 // Permission levels: '0000' (basic), '1111' (intermediate), '2222' (advanced)
 router.use(permission("0000"));
 
+router.use("/v1/api/discount", discountRouter);
 router.use("/v1/api", accessRouter);
 router.use("/v1/api/product", productRouter);
-router.use("/v1/api/discount", discountRouter);
 
 export default router;
